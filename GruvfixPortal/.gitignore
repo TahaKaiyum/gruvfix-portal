@@ -1,0 +1,25 @@
+# Node
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Logs
+*.log
+
+# AI Generated
+GruvfixPortal/.system_generated/
+GruvfixPortal/.tempmediaStorage/
+
+# VS Code
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build
+dist/
+build/
