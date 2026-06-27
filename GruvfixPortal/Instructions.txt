@@ -1,0 +1,222 @@
+# Master Guide: Setting Up an Agentic & Skills-Based Workflow
+
+This guide provides a comprehensive, step-by-step tutorial on how to implement an **Agentic and Skills-based Workflow** in any codebase. This workflow leverages workspace-level context files to guide AI coding assistants (like Antigravity) through structured, role-based product lifecycles—from drafting technical specs to test-driven coding and deployment.
+
+---
+
+## Part 1: How the Agentic Workflow Operates
+
+When an AI coding assistant is initialized in a workspace, it scans the repository for metadata. It specifically looks for a `.agents` folder.
+
+```mermaid
+flowchart TD
+    Init[AI Assistant Starts Turn] --> ScanDir[Scan Root for .agents/]
+    ScanDir --> LoadGlobal[Load dev_instructions.txt as Global Context]
+    ScanDir --> LoadSkills[Load .agents/skills/**/SKILL.md files]
+    
+    LoadSkills --> ParseYAML[Parse YAML Headers: Name & Description]
+    ParseYAML --> PromptRegistry[Register Skills in Prompt Template]
+    
+    UserRequest[User sends request] --> Match[Evaluate request against Skill descriptions]
+    Match -- "Matches Description" --> AdoptRole[Adopt Skill Persona & Execute Checklist]
+    Match -- "No Specific Match" --> GeneralRole[Adopt General Developer Persona]
+```
+
+### Key Components:
+1. **Global Instructions (`dev_instructions.txt`)**: Defines the "rules of the house"—coding standards, testing frameworks, git commit guidelines, and communication protocols. These are active for **every** turn.
+2. **Modular Skills (`skills/`)**: Dynamic instruction files that are loaded contextually. Each skill represents a specific job function (e.g., Spec Writer, QA Tester, Code Developer).
+
+---
+
+## Part 2: Step-by-Step Workspace Setup
+
+To implement this workflow, create the following folders and files at the root of your project:
+
+```text
+your-project-root/
+└── .agents/
+    ├── dev_instructions.txt
+    └── skills/
+        ├── spec-drafter/
+        │   └── SKILL.md
+        ├── business-analyst/
+        │   └── SKILL.md
+        └── developer/
+            └── SKILL.md
+```
+
+### Step 1: Create Global Dev Instructions
+Write your project guidelines to `.agents/dev_instructions.txt`. This is the system prompt override for the AI.
+
+#### Template:
+```text
+# GLOBAL DEVELOPMENT DIRECTIVES
+
+## Tech Stack & Architecture
+- Core: [Define your core tech, e.g., React, TypeScript, Next.js, FastAPI]
+- Backend/DB: [Define your database, e.g., Supabase PostgreSQL, Prisma]
+- CSS/Styling: [Define styling rules, e.g., Tailwind CSS, Vanilla CSS]
+- Routing & State: [Define routing, e.g., TanStack Router, React Query]
+
+## Quality & Testing Standards
+- Write clean, functional, type-safe code.
+- Implement unit tests for all new logic. Prefer [Vitest/Jest/Pytest] for unit tests.
+- Never write placeholder code or comments like `// TODO: implement this later`.
+
+## Git & Commit Guidelines
+- Commit code in small, atomic chunks.
+- Format commit messages: "feat: [brief description]", "fix: [brief description]", or "test: [brief description]".
+- Ask the user for confirmation before committing or pushing code.
+
+## Communication Protocols
+- Prioritize user instructions above all rules.
+- Do not make assumptions on design or business rules. Ask clarifying questions.
+- Keep responses concise. When a task is complete, summarize your work.
+```
+
+---
+
+### Step 2: Define Specialized Skills
+Inside `.agents/skills/`, create a folder for each role and add a `SKILL.md` file. The top of the file **must** contain YAML frontmatter.
+
+#### 1. Spec Drafter (`.agents/skills/spec-drafter/SKILL.md`)
+This skill triggers when you want the AI to write a specification document for a new feature.
+
+```markdown
+---
+name: spec-drafter
+description: Use this skill when the user provides a feature requirement, user story, or product idea in English and needs a technical specification document or architecture draft
+---
+
+# Role: Technical Spec Drafter
+You are a senior technical writer and systems architect. Your goal is to draft clear, structured Technical Specifications (SPECs) for features.
+
+## Process Workflow:
+1. **Analyze Requirements**: Parse the user's requirements.
+2. **Draft the Spec**: Create a markdown file inside a `planned-features/` or `docs/` folder containing:
+   - **Feature Summary**: What is the feature and why is it needed?
+   - **User Journeys / Personas**: Who is using it?
+   - **Functional Requirements**: Core requirements numbered (e.g., [FR-01], [FR-02]).
+   - **Database Schema Updates**: Detailed SQL migrations or schema adjustments.
+   - **API / UI Contracts**: Endpoint inputs/outputs or component structures.
+3. **Review**: Present the spec draft to the user and request feedback before proceeding.
+```
+
+#### 2. Business Analyst (`.agents/skills/business-analyst/SKILL.md`)
+This skill triggers when you want the AI to break down a spec into granular, estimable developer stories.
+
+```markdown
+---
+name: business-analyst
+description: Use this skill when the user asks to create user stories, define acceptance criteria, or refine the product backlog
+---
+
+# Role: Business Analyst
+You are an Agile Business Analyst. Your goal is to refine specifications into actionable backlog items.
+
+## Process Workflow:
+1. **Read Spec**: Read the specification document from the `planned-features/` directory.
+2. **Write User Stories**: Create stories in the standard format:
+   - *As a* [User Persona], *I want to* [Perform Action], *so that* [Achieve Value].
+3. **Define Acceptance Criteria**: Use the **Gherkin syntax** (Given-When-Then) for clarity:
+   - *Given* [Precondition], *When* [Action], *Then* [Expected Outcome].
+4. **Identify Blockers**: Highlight any technical dependencies or business rule ambiguities.
+```
+
+#### 3. Developer (`.agents/skills/developer/SKILL.md`)
+This skill triggers when you instruct the AI to write the actual code and run tests.
+
+```markdown
+---
+name: developer
+description: Use this skill when the user asks to start developing a story, implement a feature, or resolve a bug in the code
+---
+
+# Role: Software Developer
+You are a senior software engineer responsible for implementing features following test-driven development (TDD).
+
+## Process Workflow:
+1. **Gather Context**: Locate the relevant SPEC or User Story files.
+2. **Setup Test Cases**: Write tests defining the acceptance criteria (using mocks for external databases/APIs if necessary).
+3. **Write Code**: Implement the minimum code needed to pass the tests. Refactor for clean architecture.
+4. **Validate**: Run the tests and fix any compilation or runtime errors.
+5. **UAT Loop**:
+   - Run the application dev server locally.
+   - Inform the user that the feature is ready for manual testing.
+   - Wait for the user to respond with "UAT Success" or "Good to Deploy".
+6. **Finalize**: Format, lint, and ask the user for confirmation to commit.
+```
+
+---
+
+## Part 3: The Collaboration Loop in Action
+
+When you develop a feature using this setup, the process follows a structured lifecycle:
+
+```mermaid
+sequenceDiagram
+    actor Developer as You (User)
+    participant Agent as AI Coding Assistant (Antigravity)
+    
+    Developer->>Agent: "I want to add a shopping cart feature."
+    Note over Agent: Triggers 'spec-drafter' skill
+    Agent->>Agent: Writes planned-features/shopping_cart_spec.md
+    Agent-->>Developer: "I've created the technical spec. Please review."
+    
+    Developer->>Agent: "The spec looks good. Break it down into stories."
+    Note over Agent: Triggers 'business-analyst' skill
+    Agent->>Agent: Refines user stories and acceptance criteria
+    Agent-->>Developer: "I've drafted the stories. Ready to develop?"
+    
+    Developer->>Agent: "Let's implement Story 1: Add item to cart."
+    Note over Agent: Triggers 'developer' skill
+    Agent->>Agent: Writes unit tests -> Writes code -> Runs tests
+    Agent->>Agent: Launches local dev server
+    Agent-->>Developer: "Dev server is running. Please test it at http://localhost:5173"
+    
+    Developer->>Agent: "Tested successfully. UAT Success."
+    Agent->>Agent: Commits code & pushes to git
+    Agent-->>Developer: "Task complete and committed!"
+```
+
+---
+
+## Part 4: Advanced Subagent Coordination
+
+For larger projects, you can direct the AI assistant to delegate complex tasks to specialized background agents using the `define_subagent` and `invoke_subagent` tools.
+
+### Example Coordination Pattern:
+If you need to perform extensive research across a codebase or API documentation without cluttering the main conversation:
+1. **Main Agent** defines a `codebase-researcher` subagent:
+   ```json
+   {
+     "name": "codebase-researcher",
+     "description": "Subagent with read-only tools to survey files and report code usage patterns.",
+     "enable_write_tools": false
+   }
+   ```
+2. **Main Agent** invokes it to analyze dependencies:
+   ```json
+   {
+     "TypeName": "codebase-researcher",
+     "Role": "Codebase Researcher",
+     "Prompt": "Search for all components using the old button component and list their file paths."
+   }
+   ```
+3. **Subagent** runs in the background, gathers files, and posts a summary report back to the Main Agent.
+
+---
+
+## Part 5: Pro-Tips for Optimizing the Workflow
+
+> [!IMPORTANT]
+> **Keep Instructions Actionable**
+> Avoid high-level abstractions like "write high-quality code". Instead, use concrete instructions: "Ensure all React components use TypeScript interfaces for props, and are structured as functional components using hooks."
+
+> [!TIP]
+> **Use Markdown Alerts in Skill Files**
+> The AI assistant interprets alerts (`> [!NOTE]`, `> [!WARNING]`) as high-priority constraints. Use them to highlight critical paths or security requirements (e.g., "Always enable Row Level Security on new tables").
+
+> [!CAUTION]
+> **Bypass Script Restrictions on Windows**
+> If your system has PowerShell script execution disabled, instruct your agent to use shell-safe wrappers (e.g., `npm.cmd` instead of `npm`, `npx.cmd` instead of `npx`).

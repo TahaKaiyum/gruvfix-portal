@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gruvfix Portal - Production Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Load Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- MAIN LOGIN CONTAINER (Split-Screen) -->
+    <div id="login-page" class="page active">
+        <div class="split-container">
+            <!-- Left Side: Login Form -->
+            <div class="login-side">
+                <div class="login-left-wrapper">
+                    <!-- Brand Logo -->
+                    <div class="logo-box">
+                        <img src="Logo.png" alt="Gruvfix Logo" class="brand-logo-img">
+                    </div>
+
+                    <!-- Title & Subtitle -->
+                    <div class="login-header">
+                        <h1>Production Monitor</h1>
+                        <p>Hourly work tracking for Gruvfix Gaskets and Seals LLP. Sign in to access your role-specific console.</p>
+                    </div>
+
+                    <!-- Role Selector Tabs -->
+                    <div class="role-selector">
+                        <button type="button" id="tab-admin" class="role-tab active" onclick="switchRole('admin')">
+                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Admin
+                        </button>
+                        <button type="button" id="tab-employee" class="role-tab" onclick="switchRole('employee')">
+                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            Employee
+                        </button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="login-form" onsubmit="handleLogin(event)">
+                        <div class="form-instruction" id="form-instruction">LOGIN WITH ADMIN EMAIL</div>
+                        
+                        <div class="form-group" id="input-group-email">
+                            <label for="login-username" id="label-username">EMAIL</label>
+                            <input type="text" id="login-username" placeholder="admin@gruvfix.com" required autocomplete="username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">PASSWORD</label>
+                            <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+
+                        <button type="submit" class="btn-submit">
+                            Sign in
+                        </button>
+                    </form>
+
+                    <!-- Default Credentials Box -->
+                    <div class="credentials-box">
+                        <div class="cred-title">DEFAULT CREDENTIALS</div>
+                        <div class="cred-row">
+                            <span class="cred-label">Admin:</span>
+                            <span class="cred-value" onclick="fillCreds('admin@gruvfix.com', 'Admin123')">admin@gruvfix.com / Admin123</span>
+                        </div>
+                        <div class="cred-row">
+                            <span class="cred-label">Employee:</span>
+                            <span class="cred-value" onclick="fillCreds('EMP001', 'Emp@12345')">EMP001 / Emp@12345</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Dark Green Tinted Marketing/Stats -->
+            <div class="image-side">
+                <div class="image-overlay"></div>
+                <div class="image-content live-monitor-content">
+                    <!-- Live Header -->
+                    <div class="monitor-header">
+                        <div class="live-indicator">
+                            <span class="live-dot animate-pulse"></span>
+                            <span class="live-text">LIVE SHOP FLOOR MONITOR</span>
+                        </div>
+                        <span class="shift-badge">SHIFT A (08:00 - 20:00)</span>
+                    </div>
+
+                    <!-- Machine Statuses Grid -->
+                    <div class="monitor-section">
+                        <div class="section-title">ACTIVE MACHINES</div>
+                        <div class="machine-grid">
+                            <div class="machine-card status-running">
+                                <div class="machine-info">
+                                    <span class="machine-name">CNC-01</span>
+                                    <span class="machine-status">RUNNING</span>
+                                </div>
+                                <span class="indicator-dot glow-green"></span>
+                            </div>
+                            <div class="machine-card status-running">
+                                <div class="machine-info">
+                                    <span class="machine-name">CNC-02</span>
+                                    <span class="machine-status">RUNNING</span>
+                                </div>
+                                <span class="indicator-dot glow-green"></span>
+                            </div>
+                            <div class="machine-card status-idle">
+                                <div class="machine-info">
+                                    <span class="machine-name">CNC-03</span>
+                                    <span class="machine-status">IDLE</span>
+                                </div>
+                                <span class="indicator-dot glow-amber"></span>
+                            </div>
+                            <div class="machine-card status-maintenance">
+                                <div class="machine-info">
+                                    <span class="machine-name">PNS-01</span>
+                                    <span class="machine-status">DOWN</span>
+                                </div>
+                                <span class="indicator-dot glow-red"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Production Stats -->
+                    <div class="monitor-section">
+                        <div class="section-title">SHIFT METRICS</div>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-label">OEE (FLOOR AVERAGE)</span>
+                                <span class="metric-value">94.2% <span class="trend-up">↑</span></span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">PARTS PRODUCED</span>
+                                <span class="metric-value" id="monitor-stat-parts">284 <span class="target-sub">/ 350</span></span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">OPERATORS ON SHIFT</span>
+                                <span class="metric-value">3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Terminal Feed -->
+                    <div class="monitor-section">
+                        <div class="section-title">LIVE SHIFT LOG</div>
+                        <div class="terminal-log" id="live-terminal-log">
+                            <div class="log-line">
+                                <span class="log-time">[15:44]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP001 saved 15 parts for Acme Test on CNC-03
+                            </div>
+                            <div class="log-line">
+                                <span class="log-time">[15:30]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP003 saved 50 parts for TATA MOTORS on PNS-01
+                            </div>
+                            <div class="log-line">
+                                <span class="log-time">[15:15]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP002 saved 40 parts for RELIANCE on MLD-02
+                            </div>
+                            <div class="log-line">
+                                <span class="log-time">[14:55]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP001 saved 10 parts for Acme Test on CNC-03
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Copyright Footer -->
+                <div class="made-with-watermark">
+                    <span class="copyright-text">© 2026 Gruvfix Gaskets and Seals LLP. All rights reserved.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- EMPLOYEE DASHBOARD CONTAINER -->
+    <div id="employee-dashboard" class="page">
+        <div class="dashboard-container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-top">
+                    <!-- Sidebar Logo -->
+                    <div class="sidebar-logo-container">
+                        <img src="Logo.png" alt="Gruvfix Logo" class="sidebar-logo-img">
+                        <div class="sidebar-brand-text">
+                            <span class="brand-main">GRUVFIX</span>
+                            <span class="brand-sub">GASKETS & SEALS LLP</span>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Menu -->
+                    <nav class="sidebar-menu">
+                        <div class="menu-label">MENU</div>
+                        <button type="button" id="menu-new-entry" class="menu-item active" onclick="switchDashboardTab('new-entry')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="12" y1="18" x2="12" y2="12"/>
+                                <line x1="9" y1="15" x2="15" y2="15"/>
+                            </svg>
+                            New Entry
+                        </button>
+                        <button type="button" id="menu-my-history" class="menu-item" onclick="switchDashboardTab('my-history')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            My History
+                        </button>
+                        <button type="button" id="menu-tool-requests" class="menu-item" onclick="switchDashboardTab('tool-requests')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="9" y1="3" x2="9" y2="21"/>
+                                <line x1="15" y1="3" x2="15" y2="21"/>
+                                <line x1="3" y1="9" x2="21" y2="9"/>
+                                <line x1="3" y1="15" x2="21" y2="15"/>
+                            </svg>
+                            Request a Tool
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Sidebar Footer -->
+                <div class="sidebar-footer">
+                    <div class="user-info-sidebar">
+                        <div class="signed-in-label">SIGNED IN</div>
+                        <div class="user-name-sidebar">Ravi Kumar</div>
+                        <div class="user-role-sidebar">EMPLOYEE</div>
+                    </div>
+                    <button type="button" class="btn-logout" onclick="logout()">
+                        <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Panel Content -->
+            <main class="main-content">
+                <!-- Header -->
+                <header class="content-header">
+                    <div class="header-left">
+                        <span class="app-small-title">PRODUCTION MONITOR</span>
+                        <h2>Shop Floor</h2>
+                    </div>
+                    <div class="header-right">
+                        <span class="user-display-name">Ravi Kumar</span>
+                        <span class="user-display-id">EMP001</span>
+                    </div>
+                </header>
+
+                <!-- PAGE: New Entry View -->
+                <div id="view-new-entry" class="tab-view active">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">HOURLY LOGGING</span>
+                            <h3>New work entry</h3>
+                            <p class="description-text">Pick the hour and customer once, then add as many parts as needed for that slot.</p>
+                        </div>
+                        
+                        <!-- Mini Stats Cards -->
+                        <div class="mini-stats-grid">
+                            <div class="mini-stat-card">
+                                <span class="mini-stat-label">TODAY ENTRIES</span>
+                                <span class="mini-stat-value" id="stat-today-entries">0</span>
+                            </div>
+                            <div class="mini-stat-card">
+                                <span class="mini-stat-label">TODAY QTY</span>
+                                <span class="mini-stat-value" id="stat-today-qty">0</span>
+                            </div>
+                            <div class="mini-stat-card">
+                                <span class="mini-stat-label">DEFAULT SHIFT</span>
+                                <span class="mini-stat-value">A</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Form Card -->
+                    <div class="card form-card">
+                        <form id="work-entry-form" onsubmit="saveWorkEntries(event)">
+                            <!-- General Slot Selectors -->
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label>DATE</label>
+                                    <div class="input-with-icon">
+                                        <input type="date" id="entry-date" required>
+                                        <svg class="input-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                            <line x1="16" y1="2" x2="16" y2="6"/>
+                                            <line x1="8" y1="2" x2="8" y2="6"/>
+                                            <line x1="3" y1="10" x2="21" y2="10"/>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>SHIFT</label>
+                                    <select id="entry-shift" required>
+                                        <option value="Day Shift (08:00 - 20:00)" selected>Day Shift (08:00 - 20:00)</option>
+                                        <option value="Night Shift (20:00 - 08:00)">Night Shift (20:00 - 08:00)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>HOUR SLOT</label>
+                                    <select id="entry-hour" required>
+                                        <option value="" disabled selected>Select hour</option>
+                                        <option value="08:00 - 09:00">08:00 - 09:00</option>
+                                        <option value="09:00 - 10:00">09:00 - 10:00</option>
+                                        <option value="10:00 - 11:00">10:00 - 11:00</option>
+                                        <option value="11:00 - 12:00">11:00 - 12:00</option>
+                                        <option value="12:00 - 13:00">12:00 - 13:00</option>
+                                        <option value="13:00 - 14:00">13:00 - 14:00</option>
+                                        <option value="14:00 - 15:00">14:00 - 15:00</option>
+                                        <option value="15:00 - 16:00">15:00 - 16:00</option>
+                                        <option value="16:00 - 17:00">16:00 - 17:00</option>
+                                        <option value="17:00 - 18:00">17:00 - 18:00</option>
+                                        <option value="18:00 - 19:00">18:00 - 19:00</option>
+                                        <option value="19:00 - 20:00">19:00 - 20:00</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Parts Log Section -->
+                            <div class="parts-section">
+                                <div class="parts-section-header">
+                                    <div>
+                                        <h4>PARTS IN THIS HOUR</h4>
+                                        <p>Add multiple part numbers under the same hour slot.</p>
+                                    </div>
+                                    <button type="button" class="btn-add-part" onclick="addPartRow()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                        Add part
+                                    </button>
+                                </div>
+
+                                <!-- Parts List Header Row -->
+                                <div class="parts-table-header">
+                                    <div class="col-part">PART #</div>
+                                    <div class="col-comp">CUSTOMER</div>
+                                    <div class="col-proc">PROCESS</div>
+                                    <div class="col-qty">QTY</div>
+                                    <div class="col-mach">MACHINE</div>
+                                    <div class="col-status">STATUS</div>
+                                    <div class="col-remarks">REMARKS</div>
+                                    <div class="col-attach">ATTACHMENT</div>
+                                    <div class="col-actions"></div>
+                                </div>
+
+
+                                <!-- Rows Container -->
+                                <div id="part-rows-container">
+                                    <!-- Dynamic rows will be inserted here -->
+                                </div>
+
+                                <!-- Parts Footer Summary & Actions -->
+                                <div class="parts-section-footer">
+                                    <div class="parts-summary" id="parts-summary-text">
+                                        1 row • 1 total qty
+                                    </div>
+                                    <div class="parts-actions">
+                                        <button type="button" class="btn-reset" onclick="resetForm()">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                                            </svg>
+                                            Reset
+                                        </button>
+                                        <button type="submit" class="btn-save" id="btn-save-entries">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                                <polyline points="7 3 7 8 15 8"/>
+                                            </svg>
+                                            Save 1 entry
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Today's Entries Table -->
+                    <div class="today-entries-section">
+                        <h3>Today's entries</h3>
+                        <div class="card table-card">
+                            <table class="data-table" id="today-entries-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hour</th>
+                                        <th>Customer</th>
+                                        <th>Part</th>
+                                        <th>Process</th>
+                                        <th>Qty</th>
+                                        <th>Status</th>
+                                        <th>File</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="today-entries-tbody">
+                                    <tr class="empty-row-tr">
+                                        <td colspan="8" class="empty-table-state">No entries logged for today yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE: My History View -->
+                <div id="view-my-history" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">MY WORK HISTORY</span>
+                            <h3>My Entries</h3>
+                        </div>
+                    </div>
+
+                    <!-- Filters Card -->
+                    <div class="card filters-card">
+                        <div class="filters-container">
+                            <div class="filter-group">
+                                <label>FROM</label>
+                                <input type="date" id="filter-from-date" value="2026-05-01">
+                            </div>
+                            <div class="filter-group">
+                                <label>TO</label>
+                                <input type="date" id="filter-to-date" value="2026-06-15">
+                            </div>
+                            <div class="filter-stats" id="history-summary-stats">
+                                3 entries • 36 qty
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History Table -->
+                    <div class="history-table-section">
+                        <div class="card table-card">
+                            <table class="data-table" id="history-entries-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Hour</th>
+                                        <th>Customer</th>
+                                        <th>Part</th>
+                                        <th>Process</th>
+                                        <th>Qty</th>
+                                        <th>Status</th>
+                                        <th>File</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-entries-tbody">
+                                    <!-- Pre-populated historical values -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE: Tool Requests View -->
+                <div id="view-tool-requests" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">RESOURCE REQUEST</span>
+                            <h3>Request a Tool</h3>
+                            <p class="description-text">Select a tool, specify the customer, and describe specifications needed for the job.</p>
+                        </div>
+                    </div>
+
+                    <div class="card form-card" style="margin-bottom: 24px;">
+                        <form id="tool-request-form" onsubmit="submitToolRequest(event)">
+                            <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
+                                <div class="form-group">
+                                    <label>EMPLOYEE NAME</label>
+                                    <input type="text" id="tool-req-empname" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                                </div>
+                                <div class="form-group">
+                                    <label>TOOL NEEDED</label>
+                                    <input type="text" id="tool-req-name" placeholder="e.g. Carbide End Mill - 4 Flute" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>CUSTOMER</label>
+                                    <select id="tool-req-customer" required onchange="handleCustomerSelectChange(this.value)">
+                                        <!-- Will be populated dynamically with customer list -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" id="tool-req-customcust-group" style="display: none; margin-bottom: 16px;">
+                                <label>CUSTOM CUSTOMER NAME</label>
+                                <input type="text" id="tool-req-customcust" placeholder="Specify name of the customer..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <label>REQUIREMENTS / SPECIFICATIONS</label>
+                                <textarea id="tool-req-specs" rows="3" placeholder="Describe the size, dia, flute length, tool length, quantity, or any specific requirements for this tool..." required style="width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-size: 13px; font-family: inherit; resize: vertical;"></textarea>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end;">
+                                <button type="submit" class="btn-save">
+                                    Submit Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- My Requests Table -->
+                    <div class="today-entries-section">
+                        <h3>My Tool Requests</h3>
+                        <div class="card table-card">
+                            <table class="data-table" id="emp-tool-requests-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tool Requested</th>
+                                        <th>Customer</th>
+                                        <th>Requirements / Specs</th>
+                                        <th>Status</th>
+                                        <th>Return Condition</th>
+                                        <th style="text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="emp-tool-requests-tbody">
+                                    <!-- Dynamic tool requests -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+    <!-- ADMIN DASHBOARD CONTAINER -->
+    <div id="admin-dashboard" class="page">
+        <div class="dashboard-container">
+            <!-- Sidebar -->
+            <aside class="sidebar admin-sidebar">
+                <div class="sidebar-top">
+                    <!-- Sidebar Logo -->
+                    <div class="sidebar-logo-container">
+                        <img src="Logo.png" alt="Gruvfix Logo" class="sidebar-logo-img">
+                        <div class="sidebar-brand-text">
+                            <span class="brand-main">GRUVFIX</span>
+                            <span class="brand-sub">GASKETS & SEALS LLP</span>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Menu -->
+                    <nav class="sidebar-menu">
+                        <div class="menu-label">ADMIN PANEL</div>
+                        <button type="button" id="admin-menu-dashboard" class="menu-item active" onclick="switchAdminTab('dashboard')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="9"/>
+                                <rect x="14" y="3" width="7" height="5"/>
+                                <rect x="14" y="12" width="7" height="9"/>
+                                <rect x="3" y="16" width="7" height="5"/>
+                            </svg>
+                            Dashboard
+                        </button>
+                        <button type="button" id="admin-menu-entries" class="menu-item" onclick="switchAdminTab('entries')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="8" y1="6" x2="21" y2="6"/>
+                                <line x1="8" y1="12" x2="21" y2="12"/>
+                                <line x1="8" y1="18" x2="21" y2="18"/>
+                                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                                <line x1="3" y1="18" x2="3.01" y2="18"/>
+                            </svg>
+                            All Entries
+                        </button>
+                        <button type="button" id="admin-menu-employees" class="menu-item" onclick="switchAdminTab('employees')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            Employees
+                        </button>
+                        <button type="button" id="admin-menu-customers" class="menu-item" onclick="switchAdminTab('customers')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
+                            Customers
+                        </button>
+                        <button type="button" id="admin-menu-parts" class="menu-item" onclick="switchAdminTab('parts')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                            </svg>
+                            Parts
+                        </button>
+                        <button type="button" id="admin-menu-tools" class="menu-item" onclick="switchAdminTab('tools')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="21 8 21 21 3 21 3 8"/>
+                                <rect x="1" y="3" width="22" height="5"/>
+                                <line x1="10" y1="12" x2="14" y2="12"/>
+                            </svg>
+                            Tools & Inventory
+                        </button>
+                        <button type="button" id="admin-menu-tool-requests" class="menu-item" onclick="switchAdminTab('tool-requests')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            Tool Requests
+                        </button>
+                        <button type="button" id="admin-menu-reports" class="menu-item" onclick="switchAdminTab('reports')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"/>
+                                <line x1="12" y1="20" x2="12" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                            Reports
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Sidebar Footer -->
+                <div class="sidebar-footer">
+                    <div class="user-info-sidebar">
+                        <div class="signed-in-label">SIGNED IN</div>
+                        <div class="user-name-sidebar">Administrator</div>
+                        <div class="user-role-sidebar admin-role">ADMIN</div>
+                    </div>
+                    <button type="button" class="btn-logout" onclick="logout()">
+                        <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Panel Content -->
+            <main class="main-content">
+                <!-- Header -->
+                <header class="content-header">
+                    <div class="header-left">
+                        <span class="app-small-title">PRODUCTION MONITOR</span>
+                        <h2 id="admin-header-title">Admin Console</h2>
+                    </div>
+                    <div class="header-right">
+                        <span class="user-display-name">Administrator</span>
+                        <span class="user-display-id">admin@gruvfix.com</span>
+                    </div>
+                </header>
+
+                <!-- TAB: Dashboard -->
+                <div id="admin-view-dashboard" class="tab-view active">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">TODAY AT A GLANCE</span>
+                            <h3>Production Overview</h3>
+                            <p class="description-text">Live shop-floor metrics. Updates whenever you reload.</p>
+                        </div>
+                    </div>
+
+                    <!-- Row 1: KPI Stats Grid -->
+                    <div class="admin-stats-grid-4">
+                        <div class="admin-stat-card-tech">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech">ENTRIES TODAY</span>
+                                <svg class="stat-icon-tech" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-entries">0</div>
+                        </div>
+                        <div class="admin-stat-card-tech">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech">QUANTITY PROCESSED</span>
+                                <svg class="stat-icon-tech" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M22 12H18"/>
+                                    <path d="M6 12H2"/>
+                                    <path d="M12 6V2"/>
+                                    <path d="M12 22v-4"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-qty">0</div>
+                        </div>
+                        <div class="admin-stat-card-tech">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech">ACTIVE EMPLOYEES</span>
+                                <svg class="stat-icon-tech" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-employees">2</div>
+                        </div>
+                        <div class="admin-stat-card-tech">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech">CUSTOMERS / PARTS</span>
+                                <svg class="stat-icon-tech" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                                    <line x1="6" y1="6" x2="6.01" y2="6"/>
+                                    <line x1="6" y1="18" x2="6.01" y2="18"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-custparts">2 / 2</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Status States Grid -->
+                    <div class="admin-stats-grid-4 margin-top-20">
+                        <div class="admin-stat-card-tech border-left-green">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech font-green">COMPLETED</span>
+                                <svg class="stat-icon-tech font-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-completed">0</div>
+                        </div>
+                        <div class="admin-stat-card-tech border-left-orange">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech font-orange">PENDING</span>
+                                <svg class="stat-icon-tech font-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-pending">0</div>
+                        </div>
+                        <div class="admin-stat-card-tech border-left-red">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech font-red">REWORK</span>
+                                <svg class="stat-icon-tech font-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <line x1="12" y1="9" x2="12" y2="13"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-rework">0</div>
+                        </div>
+                        <div class="admin-stat-card-tech border-left-blue">
+                            <div class="stat-header-tech">
+                                <span class="stat-title-tech font-blue">HOLD</span>
+                                <svg class="stat-icon-tech font-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="6" y="4" width="4" height="16"/>
+                                    <rect x="14" y="4" width="4" height="16"/>
+                                </svg>
+                            </div>
+                            <div class="stat-value-large-tech" id="admin-kpi-hold">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Charts Layout -->
+                    <div class="admin-charts-row">
+                        <!-- 7-Day Trend Chart -->
+                        <div class="card chart-card">
+                            <div class="chart-header">
+                                <h4>7-DAY TREND</h4>
+                            </div>
+                            <div class="chart-content" id="chart-trend-container">
+                                <!-- Dynamic SVG Line Chart -->
+                                <svg id="svg-trend-chart" width="100%" height="220" viewBox="0 0 600 220"></svg>
+                            </div>
+                        </div>
+                        <!-- Today by Shift Bar Chart -->
+                        <div class="card chart-card">
+                            <div class="chart-header">
+                                <h4>TODAY BY SHIFT</h4>
+                            </div>
+                            <div class="chart-content" id="chart-shift-container">
+                                <!-- Dynamic SVG Bar Chart -->
+                                <svg id="svg-shift-chart" width="100%" height="220" viewBox="0 0 300 220"></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: All Entries -->
+                <div id="admin-view-entries" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">ACTIVITY LOG</span>
+                            <h3>All Work Entries</h3>
+                        </div>
+                    </div>
+
+                    <!-- Filter Options -->
+                    <div class="card filters-card">
+                        <div class="filters-grid-row">
+                            <div class="filter-group">
+                                <label>FROM</label>
+                                <input type="date" id="admin-filter-from">
+                            </div>
+                            <div class="filter-group">
+                                <label>TO</label>
+                                <input type="date" id="admin-filter-to">
+                            </div>
+                            <div class="filter-group">
+                                <label>EMPLOYEE</label>
+                                <select id="admin-filter-employee">
+                                    <option value="All">All</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>CUSTOMER</label>
+                                <select id="admin-filter-customer">
+                                    <option value="All">All</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>SHIFT</label>
+                                <select id="admin-filter-shift">
+                                    <option value="All">All</option>
+                                    <option value="A">Shift A</option>
+                                    <option value="B">Shift B</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>STATUS</label>
+                                <select id="admin-filter-status">
+                                    <option value="All">All</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="rework">Rework</option>
+                                    <option value="hold">Hold</option>
+                                </select>
+                            </div>
+                            <div class="filter-group btn-group-reset">
+                                <button type="button" class="btn-reset-filters" onclick="resetAdminFilters()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div class="filters-search-row">
+                            <div class="search-container">
+                                <input type="text" id="admin-search-entries" placeholder="Search rows..." oninput="filterAdminEntries()">
+                            </div>
+                            <div class="filter-stats" id="admin-entries-summary-stats">
+                                0 entries • 0 total qty
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entries Ledger Table -->
+                    <div class="card table-card">
+                        <table class="data-table" id="admin-entries-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Hour</th>
+                                    <th>Shift</th>
+                                    <th>Employee</th>
+                                    <th>Customer</th>
+                                    <th>Part #</th>
+                                    <th>Component</th>
+                                    <th>Process</th>
+                                    <th>Qty</th>
+                                    <th>Status</th>
+                                    <th>File</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-entries-tbody">
+                                <!-- Dynamic entries -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: Employees & Admins -->
+                <div id="admin-view-employees" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">USER MANAGEMENT</span>
+                            <h3>Employees & Admins</h3>
+                        </div>
+                        <button type="button" class="btn-add-user-header" onclick="openAddUserModal()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add user
+                        </button>
+                    </div>
+
+                    <div class="card table-card">
+                        <table class="data-table" id="admin-users-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Active</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-tbody">
+                                <!-- Dynamic user rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: Customers -->
+                <div id="admin-view-customers" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">MASTER DATA</span>
+                            <h3>Customers</h3>
+                        </div>
+                        <div class="header-action-row-horizontal">
+                            <input type="text" id="admin-search-customers" class="table-search-input" placeholder="Search customers..." oninput="renderCustomersTable()">
+                            <button type="button" class="btn-add-user-header" onclick="openAddCustomerModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add customer
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card table-card">
+                        <table class="data-table" id="admin-customers-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Code</th>
+                                    <th>Notes</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-customers-tbody">
+                                <!-- Dynamic customer rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: Parts & Components -->
+                <div id="admin-view-parts" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">MASTER DATA</span>
+                            <h3>Parts & Components</h3>
+                        </div>
+                        <div class="header-action-row-horizontal">
+                            <input type="text" id="admin-search-parts" class="table-search-input" placeholder="Search by part #, name or customer" oninput="renderPartsTable()">
+                            <button type="button" class="btn-add-user-header" onclick="openAddPartModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add part
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card table-card">
+                        <table class="data-table" id="admin-parts-table">
+                            <thead>
+                                <tr>
+                                    <th>Part #</th>
+                                    <th>Component</th>
+                                    <th>Customer</th>
+                                    <th>Default Process</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-parts-tbody">
+                                <!-- Dynamic parts rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: Tools & Inventory -->
+                <div id="admin-view-tools" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">MASTER DATA</span>
+                            <h3>Tools & Inventory</h3>
+                        </div>
+                        <div class="header-action-row-horizontal">
+                            <input type="text" id="admin-search-tools" class="table-search-input" placeholder="Search tools..." oninput="renderToolsTable()">
+                            <button type="button" class="btn-add-user-header" onclick="exportToolsToExcel()">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="3" y1="9" x2="21" y2="9"/>
+                                    <line x1="9" y1="21" x2="9" y2="9"/>
+                                </svg>
+                                Download Excel
+                            </button>
+                            <button type="button" class="btn-add-user-header" onclick="openAddToolModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add tool
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card table-card">
+                        <table class="data-table" id="admin-tools-table">
+                            <thead>
+                                <tr>
+                                    <th>Tool Name</th>
+                                    <th>Dia (Shank)</th>
+                                    <th>Flute Length</th>
+                                    <th>Tool Length</th>
+                                    <th>Tool Dia</th>
+                                    <th>Qty</th>
+                                    <th>Condition</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-tools-tbody">
+                                <!-- Dynamic tools rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: Reports -->
+                <div id="admin-view-reports" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">EXPORTS</span>
+                            <h3>Reports</h3>
+                            <p class="description-text">Apply filters and export as Excel, CSV or PDF. The Gruvfix logo is included on generated reports.</p>
+                        </div>
+                        <!-- Inline logo as seen in Adminpage_reports.png -->
+                        <div class="reports-header-logo">
+                            <img src="Logo.png" alt="Gruvfix Logo" class="reports-brand-logo">
+                        </div>
+                    </div>
+
+                    <!-- Filter panel for reports -->
+                    <div class="card reports-filter-card">
+                        <div class="reports-filter-grid">
+                            <div class="form-group">
+                                <label>FROM DATE</label>
+                                <input type="date" id="report-filter-from">
+                            </div>
+                            <div class="form-group">
+                                <label>TO DATE</label>
+                                <input type="date" id="report-filter-to">
+                            </div>
+                            <div class="form-group">
+                                <label>EMPLOYEE</label>
+                                <select id="report-filter-employee">
+                                    <option value="All">All</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>CUSTOMER</label>
+                                <select id="report-filter-customer">
+                                    <option value="All">All</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>SHIFT</label>
+                                <select id="report-filter-shift">
+                                    <option value="All">All</option>
+                                    <option value="A">Shift A</option>
+                                    <option value="B">Shift B</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>STATUS</label>
+                                <select id="report-filter-status">
+                                    <option value="All">All</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="rework">Rework</option>
+                                    <option value="hold">Hold</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>PART #</label>
+                                <input type="text" id="report-filter-part" placeholder="e.g. PT-001">
+                            </div>
+                        </div>
+
+                        <!-- Exports Action Row -->
+                        <div class="reports-export-actions">
+                            <button type="button" class="btn-export-excel" onclick="exportReport('excel')">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="3" y1="9" x2="21" y2="9"/>
+                                    <line x1="9" y1="21" x2="9" y2="9"/>
+                                </svg>
+                                Excel (.xlsx)
+                            </button>
+                            <button type="button" class="btn-export-csv" onclick="exportReport('csv')">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                CSV
+                            </button>
+                            <button type="button" class="btn-export-pdf" onclick="exportReport('pdf')">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                    <polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                                PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Report Preview Table -->
+                    <div class="report-preview-section">
+                        <div class="preview-header-row">
+                            <h4>PREVIEW</h4>
+                            <span class="preview-stats-count" id="report-preview-summary-stats">0 entries • 0 qty</span>
+                        </div>
+                        <div class="card table-card">
+                            <table class="data-table" id="report-preview-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Hour</th>
+                                        <th>Employee</th>
+                                        <th>Customer</th>
+                                        <th>Part</th>
+                                        <th>Qty</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-preview-tbody">
+                                    <!-- Dynamic report preview rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: Tool Requests (Admin View) -->
+                <div id="admin-view-tool-requests" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">OPERATIONS CONTROL</span>
+                            <h3>Employee Tool Requests</h3>
+                            <p class="description-text">Review active requests and approve tool returns (closings).</p>
+                        </div>
+                    </div>
+
+                    <div class="card table-card">
+                        <table class="data-table" id="admin-tool-requests-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Customer</th>
+                                    <th>Tool Requested</th>
+                                    <th>Requirements / Specs</th>
+                                    <th>Status</th>
+                                    <th>Return Condition</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-tool-requests-tbody">
+                                <!-- Dynamic requests rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         DIALOG MODALS
+         ========================================== -->
+
+    <!-- Add/Edit User Modal -->
+    <div id="modal-user" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-user-title">Add New User</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-user')">×</button>
+            </div>
+            <form id="form-user" onsubmit="saveUserModal(event)">
+                <input type="hidden" id="modal-user-index">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>ROLE</label>
+                        <select id="modal-user-role" onchange="toggleUserModalFields()" required>
+                            <option value="employee" selected>Employee</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="modal-user-empid-group">
+                        <label>EMPLOYEE ID</label>
+                        <input type="text" id="modal-user-empid" placeholder="e.g. EMP002">
+                    </div>
+                    <div class="form-group">
+                        <label>EMAIL</label>
+                        <input type="email" id="modal-user-email" placeholder="e.g. emp002@gruvfix.com" required>
+                    </div>
+                    <div class="form-group" id="modal-user-password-group">
+                        <label>PASSWORD</label>
+                        <input type="password" id="modal-user-password" placeholder="••••••••">
+                        <small class="form-hint" id="modal-user-password-hint">Leave blank to keep existing password when editing.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>ACTIVE STATUS</label>
+                        <select id="modal-user-active" required>
+                            <option value="true" selected>Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" onclick="closeModal('modal-user')">Cancel</button>
+                    <button type="submit" class="btn-save">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Customer Modal -->
+    <div id="modal-customer" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-customer-title">Add New Customer</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-customer')">×</button>
+            </div>
+            <form id="form-customer" onsubmit="saveCustomerModal(event)">
+                <input type="hidden" id="modal-customer-index">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>COMPANY NAME</label>
+                        <input type="text" id="modal-customer-name" placeholder="e.g. TATA MOTORS" required>
+                    </div>
+                    <div class="form-group">
+                        <label>CONTACT PERSON</label>
+                        <input type="text" id="modal-customer-contact" placeholder="e.g. Ravi Kumar">
+                    </div>
+                    <div class="form-group">
+                        <label>GST NUMBER</label>
+                        <input type="text" id="modal-customer-gst" placeholder="e.g. 22AAAAA0000A1Z5">
+                    </div>
+                    <div class="form-group">
+                        <label>CODE</label>
+                        <input type="text" id="modal-customer-code" placeholder="e.g. TM">
+                    </div>
+                    <div class="form-group">
+                        <label>NOTES</label>
+                        <input type="text" id="modal-customer-notes" placeholder="Optional notes...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" onclick="closeModal('modal-customer')">Cancel</button>
+                    <button type="submit" class="btn-save">Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Part Modal -->
+    <div id="modal-part" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-part-title">Add New Part</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-part')">×</button>
+            </div>
+            <form id="form-part" onsubmit="savePartModal(event)">
+                <input type="hidden" id="modal-part-index">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>PART #</label>
+                        <input type="text" id="modal-part-no" placeholder="e.g. TM-GASK-04" required>
+                    </div>
+                    <div class="form-group">
+                        <label>COMPONENT NAME</label>
+                        <input type="text" id="modal-part-comp" placeholder="e.g. Manifold Gasket" required>
+                    </div>
+                    <div class="form-group">
+                        <label>CUSTOMER</label>
+                        <select id="modal-part-customer" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>DEFAULT PROCESS</label>
+                        <input type="text" id="modal-part-process" placeholder="e.g. Punching">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" onclick="closeModal('modal-part')">Cancel</button>
+                    <button type="submit" class="btn-save">Save Part</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Log Entry Detail Viewer Modal -->
+    <div id="modal-log-details" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Work Entry Details</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-log-details')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="details-grid">
+                    <div class="detail-row">
+                        <span class="detail-label">DATE</span>
+                        <span class="detail-val" id="detail-date">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">HOUR SLOT</span>
+                        <span class="detail-val" id="detail-hour">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">SHIFT</span>
+                        <span class="detail-val" id="detail-shift">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">OPERATOR</span>
+                        <span class="detail-val" id="detail-employee">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">CUSTOMER</span>
+                        <span class="detail-val" id="detail-customer">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">PART #</span>
+                        <span class="detail-val" id="detail-part">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">COMPONENT</span>
+                        <span class="detail-val" id="detail-component">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">PROCESS</span>
+                        <span class="detail-val" id="detail-process">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">QUANTITY</span>
+                        <span class="detail-val" id="detail-qty">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">MACHINE</span>
+                        <span class="detail-val" id="detail-machine">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">STATUS</span>
+                        <span class="detail-val" id="detail-status">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">FILE ATTACHMENT</span>
+                        <span class="detail-val" id="detail-file">—</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-save" onclick="closeModal('modal-log-details')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Tool Modal -->
+    <div id="modal-tool" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-tool-title">Add New Tool</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-tool')">×</button>
+            </div>
+            <form id="form-tool" onsubmit="saveToolModal(event)">
+                <input type="hidden" id="modal-tool-index">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>TOOL NAME</label>
+                        <input type="text" id="modal-tool-name" placeholder="e.g. End Mill - 4 Flute Carbide" required>
+                    </div>
+                    <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label>DIA (SHANK)</label>
+                            <input type="text" id="modal-tool-dia" placeholder="e.g. 6mm" required>
+                        </div>
+                        <div class="form-group">
+                            <label>TOOL DIA</label>
+                            <input type="text" id="modal-tool-tooldia" placeholder="e.g. 6mm" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label>FLUTE LENGTH</label>
+                            <input type="text" id="modal-tool-flutelen" placeholder="e.g. 20mm" required>
+                        </div>
+                        <div class="form-group">
+                            <label>TOOL LENGTH</label>
+                            <input type="text" id="modal-tool-toollen" placeholder="e.g. 50mm" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label>QUANTITY</label>
+                            <input type="number" id="modal-tool-qty" value="1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>CONDITION (%)</label>
+                            <input type="number" id="modal-tool-condition" value="100" min="0" max="100" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" onclick="closeModal('modal-tool')">Cancel</button>
+                    <button type="submit" class="btn-save">Save Tool</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Return Tool / Close Request Modal -->
+    <div id="modal-return-tool" class="modal-overlay">
+        <div class="modal-card" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Return Tool & Close</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-return-tool')">×</button>
+            </div>
+            <form id="form-return-tool" onsubmit="submitReturnTool(event)">
+                <input type="hidden" id="modal-return-req-id">
+                <div class="modal-body">
+                    <p style="font-size: 13px; color: var(--text-medium); margin-bottom: 16px;">
+                        Please specify the current condition of the tool in percentage after using it.
+                    </p>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>TOOL CONDITION (%)</label>
+                        <input type="number" id="modal-return-condition" value="90" min="0" max="100" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;">
+                        <small class="form-hint" style="color: var(--text-light); font-size: 11px; margin-top: 4px; display: block;">Enter a value from 0% (worn out/broken) to 100% (perfect condition).</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" onclick="closeModal('modal-return-tool')">Cancel</button>
+                    <button type="submit" class="btn-save">Submit Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Datalists for Searchable Comboboxes -->
+    <datalist id="customers-list"></datalist>
+    <datalist id="parts-list"></datalist>
+
+    <!-- Script Files -->
+    <script src="js/state.js?v=2.2.0"></script>
+    <script src="js/dropdown.js?v=2.2.0"></script>
+    <script src="js/auth.js?v=2.2.0"></script>
+    <script src="js/employee.js?v=2.2.0"></script>
+    <script src="js/admin.js?v=2.2.0"></script>
+    <script src="js/tools.js?v=2.2.0"></script>
+    <script src="js/app.js?v=2.2.0"></script>
+</body>
+</html>

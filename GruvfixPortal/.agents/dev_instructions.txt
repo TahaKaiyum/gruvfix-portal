@@ -1,0 +1,22 @@
+# GLOBAL DEVELOPMENT DIRECTIVES
+
+## Tech Stack & Architecture
+- Core: Vanilla HTML and Javascript, with responsive split-screen layouts
+- Backend/DB: Local in-memory session persistence, extensible logic in app.js
+- CSS/Styling: Vanilla CSS, custom properties, responsive grids, and clean visual tokens
+- Routing & State: Single-page application logic in app.js using DOM manipulations
+
+## Quality & Testing Standards
+- Write clean, functional, modular code.
+- Ensure all DOM selectors are correctly resolved in app.js.
+- Never write placeholder code or comments like `// TODO: implement this later`.
+
+## Git & Commit Guidelines
+- Commit code in small, atomic chunks.
+- Format commit messages: "feat: [brief description]", "fix: [brief description]", or "test: [brief description]".
+- Ask the user for confirmation before committing or pushing code.
+
+## Communication Protocols
+- Prioritize user instructions above all rules.
+- Do not make assumptions on design or business rules. Ask clarifying questions.
+- Keep responses concise. When a task is complete, summarize your work.
