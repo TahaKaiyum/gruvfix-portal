@@ -505,3 +505,28 @@ async function approveToolReturn(reqId) {
         renderToolsTable(); // Sync tools table in background
     }
 }
+
+// Export functions for ESM imports
+export {
+    renderToolsTable, openAddToolModal, openEditToolModal, saveToolModal, deleteTool,
+    exportToolsToExcel, renderEmployeeToolRequests, handleCustomerSelectChange,
+    submitToolRequest, openReturnToolModal, submitReturnTool,
+    renderAdminToolRequestsTable, approveToolReturn
+};
+
+// Bind functions to window for backward compatibility
+window.renderToolsTable = renderToolsTable;
+window.openAddToolModal = openAddToolModal;
+window.openEditToolModal = openEditToolModal;
+window.saveToolModal = saveToolModal;
+window.deleteTool = deleteTool;
+window.exportToolsToExcel = exportToolsToExcel;
+window.renderEmployeeToolRequests = renderEmployeeToolRequests;
+window.handleCustomerSelectChange = handleCustomerSelectChange;
+window.submitToolRequest = submitToolRequest;
+window.openReturnToolModal = openReturnToolModal;
+window.submitReturnTool = submitReturnTool;
+window.renderAdminToolRequestsTable = renderAdminToolRequestsTable;
+window.approveToolReturn = approveToolReturn;
+
+

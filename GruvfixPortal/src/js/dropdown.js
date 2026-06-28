@@ -229,3 +229,23 @@ function openAddPartModalFromDropdown(rowId, event) {
         }
     }
 }
+
+// Export functions for ESM imports
+export {
+    toggleCustomDropdown, selectCustOption, filterCustDropdown,
+    selectPartOption, filterPartDropdown, openAddCustModalFromDropdown, openAddPartModalFromDropdown,
+    renderCustDropdownOptions, renderPartDropdownOptions
+};
+
+// Bind functions to window for backward compatibility
+window.toggleCustomDropdown = toggleCustomDropdown;
+window.selectCustOption = selectCustOption;
+window.filterCustDropdown = filterCustDropdown;
+window.selectPartOption = selectPartOption;
+window.filterPartDropdown = filterPartDropdown;
+window.openAddCustModalFromDropdown = openAddCustModalFromDropdown;
+window.openAddPartModalFromDropdown = openAddPartModalFromDropdown;
+window.renderCustDropdownOptions = renderCustDropdownOptions;
+window.renderPartDropdownOptions = renderPartDropdownOptions;
+
+

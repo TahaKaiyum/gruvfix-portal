@@ -4,6 +4,15 @@
  * @project GruvfixPortal
  */
 
+// Import dependent ES modules to consolidate into a single entrypoint bundle
+import './supabase.js';
+import './state.js';
+import './dropdown.js';
+import './auth/authController.js';
+import './employee.js';
+import './admin.js';
+import './tools.js';
+
 // ==========================================
 // 1. INITIALIZATION & LISTENERS BOOTSTRAP
 // ==========================================

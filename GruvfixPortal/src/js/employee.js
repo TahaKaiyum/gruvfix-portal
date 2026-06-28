@@ -541,3 +541,27 @@ function renderHistoryTable() {
         tbody.appendChild(tr);
     });
 }
+
+// Export functions for ESM imports
+export {
+    switchDashboardTab, updateEmployeeStats, addPartRow, deletePartRow,
+    handleQtyChange, triggerAttachment, handleFileSelected,
+    resetForm, saveWorkEntries, renderTodayEntriesTable, deleteTodayEntry, renderHistoryTable
+};
+
+// Bind functions to window for backward compatibility
+window.switchDashboardTab = switchDashboardTab;
+window.updateEmployeeStats = updateEmployeeStats;
+window.addPartRow = addPartRow;
+window.deletePartRow = deletePartRow;
+window.handleQtyChange = handleQtyChange;
+window.triggerAttachment = triggerAttachment;
+window.handleFileSelected = handleFileSelected;
+window.resetForm = resetForm;
+window.saveWorkEntries = saveWorkEntries;
+window.renderTodayEntriesTable = renderTodayEntriesTable;
+window.deleteTodayEntry = deleteTodayEntry;
+window.renderHistoryTable = renderHistoryTable;
+
+
+

@@ -1272,3 +1272,53 @@ function populateFilterDropdowns() {
         });
     });
 }
+
+// Export functions for ESM imports
+export {
+    switchAdminTab, updateAdminDashboard, renderTrendChart, renderShiftChart,
+    getFilteredAdminEntries, renderAdminEntriesTable, filterAdminEntries, resetAdminFilters,
+    deleteAdminEntry, updateEntryStatus, renderUsersTable, openAddUserModal,
+    openEditUserModal, toggleUserModalFields, saveUserModal, toggleUserActiveStatus, deleteUser,
+    renderCustomersTable, openAddCustomerModal, openEditCustomerModal, saveCustomerModal, deleteCustomer,
+    renderPartsTable, openAddPartModal, openEditPartModal, savePartModal, deletePart,
+    getFilteredReports, renderReportsPreview, hookReportFilters, downloadCSV, exportReport,
+    populateFilterDropdowns
+};
+
+// Bind functions to window for backward compatibility
+window.switchAdminTab = switchAdminTab;
+window.updateAdminDashboard = updateAdminDashboard;
+window.renderTrendChart = renderTrendChart;
+window.renderShiftChart = renderShiftChart;
+window.getFilteredAdminEntries = getFilteredAdminEntries;
+window.renderAdminEntriesTable = renderAdminEntriesTable;
+window.filterAdminEntries = filterAdminEntries;
+window.resetAdminFilters = resetAdminFilters;
+window.deleteAdminEntry = deleteAdminEntry;
+window.updateEntryStatus = updateEntryStatus;
+window.renderUsersTable = renderUsersTable;
+window.openAddUserModal = openAddUserModal;
+window.openEditUserModal = openEditUserModal;
+window.toggleUserModalFields = toggleUserModalFields;
+window.saveUserModal = saveUserModal;
+window.toggleUserActiveStatus = toggleUserActiveStatus;
+window.deleteUser = deleteUser;
+window.renderCustomersTable = renderCustomersTable;
+window.openAddCustomerModal = openAddCustomerModal;
+window.openEditCustomerModal = openEditCustomerModal;
+window.saveCustomerModal = saveCustomerModal;
+window.deleteCustomer = deleteCustomer;
+window.renderPartsTable = renderPartsTable;
+window.openAddPartModal = openAddPartModal;
+window.openEditPartModal = openEditPartModal;
+window.savePartModal = savePartModal;
+window.deletePart = deletePart;
+window.getFilteredReports = getFilteredReports;
+window.renderReportsPreview = renderReportsPreview;
+window.hookReportFilters = hookReportFilters;
+window.downloadCSV = downloadCSV;
+window.exportReport = exportReport;
+window.populateFilterDropdowns = populateFilterDropdowns;
+
+
+
