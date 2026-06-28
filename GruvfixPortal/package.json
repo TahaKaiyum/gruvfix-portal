@@ -1,0 +1,14 @@
+{
+  "name": "gruvfix-portal",
+  "version": "2.2.0",
+  "description": "Gruvfix Shift Production Portal",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}
