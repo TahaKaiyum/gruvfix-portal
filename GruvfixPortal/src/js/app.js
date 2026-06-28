@@ -161,6 +161,11 @@ const simMachines = ['CNC-01', 'CNC-02', 'PNS-01', 'MLD-02'];
 const simProcesses = ['Punching', 'Molding', 'Curing', 'Trimming', 'Cutting'];
 
 setInterval(() => {
+    // Only run simulation when not logged in
+    if (isLoggedIn) {
+        return;
+    }
+    
     // Generate telemetry (simulated shift floor logs) using loaded database data
     const empUsers = users.filter(u => u.role === 'employee' && u.active);
     if (empUsers.length === 0 || customers.length === 0) {
@@ -179,108 +184,44 @@ setInterval(() => {
     // Look up part choice dynamically
     const customerParts = parts.filter(p => p.customer === customer);
     let partNo = 'PT-A';
-    let component = 'Acme Primary Gasket';
     
     if (customerParts.length > 0) {
         const pObj = customerParts[Math.floor(Math.random() * customerParts.length)];
         partNo = pObj.partNo;
-        component = pObj.component;
     } else if (parts.length > 0) {
         // Fallback to any part if customer doesn't have parts mapped yet
         const pObj = parts[Math.floor(Math.random() * parts.length)];
         partNo = pObj.partNo;
-        component = pObj.component;
-    }
-    
-    // Append to dynamic store so admin sees it upon navigation / updates
-    const simulatedEntry = {
-        id: `sim-${Date.now()}`,
-        date: getTodayDateString(),
-        hour: '15:00 - 16:00',
-        customer: customer,
-        part: partNo,
-        component: component,
-        process: process,
-        qty: qty,
-        machine: machine,
-        status: 'completed',
-        file: '—',
-        locked: false,
-        employee: empId,
-        shift: 'Day Shift' // Default shift for simulation
-    };
-    
-    if (typeof dbSaveLog !== 'undefined' && supabaseClient) {
-        dbSaveLog(simulatedEntry).then(() => {
-            syncFromSupabase().then(() => {
-                if (isLoggedIn && currentRole === 'admin') {
-                    const activeTabEl = document.querySelector('#admin-dashboard .tab-view.active');
-                    if (activeTabEl) {
-                        const activeTabId = activeTabEl.id;
-                        if (activeTabId === 'admin-view-dashboard') {
-                            updateAdminDashboard();
-                        } else if (activeTabId === 'admin-view-entries') {
-                            renderAdminEntriesTable();
-                        }
-                    }
-                }
-            });
-        }).catch(err => console.error("Error saving simulated entry:", err));
-    } else {
-        historicalEntries.unshift(simulatedEntry);
     }
     
     // If we're on the login screen, show updates in real-time
-    if (!isLoggedIn) {
-        shiftPartsCount += qty;
-        const monitorPartsEl = document.getElementById('monitor-stat-parts');
-        if (monitorPartsEl) {
-            monitorPartsEl.innerHTML = `${shiftPartsCount} <span class="target-sub">/ 350</span>`;
-        }
+    shiftPartsCount += qty;
+    const monitorPartsEl = document.getElementById('monitor-stat-parts');
+    if (monitorPartsEl) {
+        monitorPartsEl.innerHTML = `${shiftPartsCount} <span class="target-sub">/ 350</span>`;
+    }
+    
+    addLiveTerminalLog(`Operator ${empId} logged ${qty} parts (${process}) for ${customer} on ${machine}`, 'success');
+    
+    // Randomly swing machine indicators
+    const machineCards = document.querySelectorAll('.machine-card');
+    if (machineCards.length > 0 && Math.random() > 0.4) {
+        const card = machineCards[Math.floor(Math.random() * machineCards.length)];
+        const statusEl = card.querySelector('.machine-status');
+        const dotEl = card.querySelector('.indicator-dot');
         
-        addLiveTerminalLog(`Operator ${empId} logged ${qty} parts (${process}) for ${customer} on ${machine}`, 'success');
-        
-        // Randomly swing machine indicators
-        const machineCards = document.querySelectorAll('.machine-card');
-        if (machineCards.length > 0 && Math.random() > 0.4) {
-            const card = machineCards[Math.floor(Math.random() * machineCards.length)];
-            const statusEl = card.querySelector('.machine-status');
-            const dotEl = card.querySelector('.indicator-dot');
-            
-            if (statusEl && dotEl) {
-                const randState = Math.random();
-                if (randState < 0.6) {
-                    statusEl.textContent = 'RUNNING';
-                    dotEl.className = 'indicator-dot glow-green';
-                } else if (randState < 0.85) {
-                    statusEl.textContent = 'IDLE';
-                    dotEl.className = 'indicator-dot glow-amber';
-                } else {
-                    statusEl.textContent = 'DOWN';
-                    dotEl.className = 'indicator-dot glow-red';
-                }
+        if (statusEl && dotEl) {
+            const randState = Math.random();
+            if (randState < 0.6) {
+                statusEl.textContent = 'RUNNING';
+                dotEl.className = 'indicator-dot glow-green';
+            } else if (randState < 0.85) {
+                statusEl.textContent = 'IDLE';
+                dotEl.className = 'indicator-dot glow-amber';
+            } else {
+                statusEl.textContent = 'DOWN';
+                dotEl.className = 'indicator-dot glow-red';
             }
-        }
-    } else if (currentRole === 'admin') {
-        // If logged in as admin and viewing active tab, live reload stats
-        const activeTabEl = document.querySelector('#admin-dashboard .tab-view.active');
-        if (activeTabEl) {
-            const activeTabId = activeTabEl.id;
-            if (activeTabId === 'admin-view-dashboard') {
-                updateAdminDashboard();
-            } else if (activeTabId === 'admin-view-entries') {
-                renderAdminEntriesTable();
-            }
-        }
-    } else if (currentRole === 'employee') {
-        // If logged in as employee, refresh counters
-        updateEmployeeStats();
-        if (currentTab === 'new-entry') {
-            renderTodayEntriesTable();
-        } else if (currentTab === 'my-history') {
-            renderHistoryTable();
-        } else if (currentTab === 'tool-requests') {
-            renderEmployeeToolRequests();
         }
     }
 }, 10000);
