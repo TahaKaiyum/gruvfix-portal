@@ -687,20 +687,107 @@ async function deleteUser(index) {
 // 5. MASTER DATA: CUSTOMER CRUD
 // ==========================================
 
+let customerCurrentPage = 1;
+const customerPageSize = 5;
+let customerSortField = 'name';
+let customerSortDirection = 'asc';
+
+function toggleCustomerSort(field) {
+    if (customerSortField === field) {
+        customerSortDirection = customerSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        customerSortField = field;
+        customerSortDirection = 'asc';
+    }
+    
+    // Reset sort indicators
+    const icons = { 'name': 'sort-icon-name', 'code': 'sort-icon-code' };
+    Object.keys(icons).forEach(f => {
+        const el = document.getElementById(icons[f]);
+        if (el) {
+            if (f === customerSortField) {
+                el.textContent = customerSortDirection === 'asc' ? '▲' : '▼';
+                el.style.color = 'var(--primary-color)';
+            } else {
+                el.textContent = '↕';
+                el.style.color = 'var(--text-light)';
+            }
+        }
+    });
+    
+    renderCustomersTable();
+}
+
+function changeCustomerPage(dir) {
+    customerCurrentPage += dir;
+    renderCustomersTable();
+}
+
 function renderCustomersTable() {
     const tbody = document.getElementById('admin-customers-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
     
     const query = document.getElementById('admin-search-customers').value.toLowerCase().trim();
-    const filtered = customers.filter(c => c.name.toLowerCase().includes(query) || (c.code && c.code.toLowerCase().includes(query)));
+    const gstFilter = document.getElementById('admin-filter-customer-gst').value;
     
-    if (filtered.length === 0) {
+    // 1. Filter
+    let filtered = customers.filter(c => {
+        const matchesQuery = c.name.toLowerCase().includes(query) || (c.code && c.code.toLowerCase().includes(query));
+        
+        let matchesGst = true;
+        if (gstFilter === 'registered') {
+            matchesGst = c.gst && c.gst !== '—' && c.gst.trim().length > 0;
+        } else if (gstFilter === 'unregistered') {
+            matchesGst = !c.gst || c.gst === '—' || c.gst.trim().length === 0;
+        }
+        
+        return matchesQuery && matchesGst;
+    });
+    
+    // 2. Sort
+    filtered.sort((a, b) => {
+        let valA = (a[customerSortField] || '').toString().toLowerCase();
+        let valB = (b[customerSortField] || '').toString().toLowerCase();
+        
+        if (valA < valB) return customerSortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return customerSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    // 3. Paginate
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / customerPageSize));
+    
+    if (customerCurrentPage > totalPages) {
+        customerCurrentPage = totalPages;
+    }
+    if (customerCurrentPage < 1) {
+        customerCurrentPage = 1;
+    }
+    
+    const startIndex = (customerCurrentPage - 1) * customerPageSize;
+    const endIndex = Math.min(startIndex + customerPageSize, totalItems);
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+    
+    // Update pagination controls info
+    const infoEl = document.getElementById('admin-customers-pagination-info');
+    if (infoEl) {
+        infoEl.textContent = totalItems === 0 ? 'Showing 0-0 of 0' : `Showing ${startIndex + 1}-${endIndex} of ${totalItems}`;
+    }
+    
+    const prevBtn = document.getElementById('admin-customers-prev-page');
+    if (prevBtn) prevBtn.disabled = customerCurrentPage === 1;
+    
+    const nextBtn = document.getElementById('admin-customers-next-page');
+    if (nextBtn) nextBtn.disabled = customerCurrentPage === totalPages;
+    
+    if (paginatedItems.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" class="empty-table-state">No customers found.</td></tr>`;
         return;
     }
     
-    filtered.forEach((cust) => {
+    paginatedItems.forEach((cust) => {
         const mainIndex = customers.findIndex(c => c.name === cust.name);
         const tr = document.createElement('tr');
         
@@ -766,58 +853,65 @@ async function saveCustomerModal(e) {
     const code = document.getElementById('modal-customer-code').value.trim();
     const notes = document.getElementById('modal-customer-notes').value.trim();
     
+    // Validation
+    if (!name) {
+        showToast("Customer name is required.", "error");
+        return;
+    }
+    if (code && !/^[A-Za-z0-9-]+$/.test(code)) {
+        showToast("Customer code must be alphanumeric.", "error");
+        return;
+    }
+    if (gst && !/^[A-Za-z0-9]{15}$/.test(gst)) {
+        showToast("GST number must be 15 alphanumeric characters.", "error");
+        return;
+    }
+    
     const newCustObj = { name, code, notes, contact, gst };
     
+    // Backup state for Optimistic UI Rollback
+    const backupCustomers = JSON.parse(JSON.stringify(customers));
+    const backupParts = JSON.parse(JSON.stringify(parts));
+    
+    // Apply local state updates optimistically
     if (index === -1) {
-        if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
-            try {
-                await dbSaveCustomer(newCustObj);
-                await syncFromSupabase();
-            } catch (err) {
-                console.error("Error creating customer:", err);
-                showToast("Failed to add customer to database.", "error");
-                return;
-            }
-        } else {
-            customers.push(newCustObj);
-        }
+        customers.push(newCustObj);
         showToast('Customer added successfully.');
-        
-        if (activeRowIdForCustomerDropdown !== null) {
-            selectCustOption(activeRowIdForCustomerDropdown, name);
-            activeRowIdForCustomerDropdown = null;
-        }
     } else {
         const oldName = customers[index].name;
-        
-        if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
-            try {
-                if (oldName !== name) {
-                    await dbDeleteCustomer(oldName);
-                }
-                await dbSaveCustomer(newCustObj);
-                await syncFromSupabase();
-            } catch (err) {
-                console.error("Error updating customer:", err);
-                showToast("Failed to update customer in database.", "error");
-                return;
-            }
-        } else {
-            customers[index].name = name;
-            customers[index].code = code;
-            customers[index].notes = notes;
-            customers[index].contact = contact;
-            customers[index].gst = gst;
-            
-            cascadeCustomerUpdate(oldName, name);
-        }
+        customers[index] = newCustObj;
+        cascadeCustomerUpdate(oldName, name);
         showToast('Customer updated successfully.');
     }
     
+    // Render immediately
     closeModal('modal-customer');
     renderCustomersTable();
     populateFilterDropdowns();
     updateAdminDashboard();
+    
+    // Perform background DB sync
+    if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+        try {
+            if (index !== -1) {
+                const oldName = backupCustomers[index].name;
+                if (oldName !== name) {
+                    await dbDeleteCustomer(oldName);
+                }
+            }
+            await dbSaveCustomer(newCustObj);
+            await syncFromSupabase();
+        } catch (err) {
+            console.error("Error saving customer:", err);
+            // Rollback local state
+            customers = backupCustomers;
+            parts = backupParts;
+            renderCustomersTable();
+            populateFilterDropdowns();
+            updateAdminDashboard();
+            showToast("Failed to save changes. Rolled back.", "error");
+        }
+    }
 }
 
 async function deleteCustomer(index) {
@@ -825,25 +919,38 @@ async function deleteCustomer(index) {
     if (confirm(`Deleting "${cust.name}" will also delete all their Parts. Are you sure you want to proceed?`)) {
         const name = cust.name;
         
+        // Backup state for Optimistic UI Rollback
+        const backupCustomers = JSON.parse(JSON.stringify(customers));
+        const backupParts = JSON.parse(JSON.stringify(parts));
+        
+        // Apply local state updates optimistically
+        parts = parts.filter(p => p.customer !== name);
+        customers.splice(index, 1);
+        
+        // Render immediately
+        renderCustomersTable();
+        renderPartsTable();
+        populateFilterDropdowns();
+        updateAdminDashboard();
+        showToast(`Customer "${name}" removed.`);
+        
+        // Perform background DB sync
         if (typeof dbDeleteCustomer !== 'undefined' && supabaseClient) {
             try {
                 await dbDeleteCustomer(name);
                 await syncFromSupabase();
             } catch (err) {
                 console.error("Error deleting customer:", err);
-                showToast("Failed to delete customer from database.", "error");
-                return;
+                // Rollback local state
+                customers = backupCustomers;
+                parts = backupParts;
+                renderCustomersTable();
+                renderPartsTable();
+                populateFilterDropdowns();
+                updateAdminDashboard();
+                showToast("Failed to delete customer. Rolled back.", "error");
             }
-        } else {
-            parts = parts.filter(p => p.customer !== name);
-            customers.splice(index, 1);
         }
-        
-        renderCustomersTable();
-        renderPartsTable();
-        populateFilterDropdowns();
-        updateAdminDashboard();
-        showToast(`Customer "${name}" and associated parts removed.`);
     }
 }
 
@@ -1287,6 +1394,7 @@ export {
     deleteAdminEntry, updateEntryStatus, renderUsersTable, openAddUserModal,
     openEditUserModal, toggleUserModalFields, saveUserModal, toggleUserActiveStatus, deleteUser,
     renderCustomersTable, openAddCustomerModal, openEditCustomerModal, saveCustomerModal, deleteCustomer,
+    toggleCustomerSort, changeCustomerPage,
     renderPartsTable, openAddPartModal, openEditPartModal, savePartModal, deletePart,
     getFilteredReports, renderReportsPreview, hookReportFilters, downloadCSV, exportReport,
     populateFilterDropdowns
@@ -1315,6 +1423,8 @@ window.openAddCustomerModal = openAddCustomerModal;
 window.openEditCustomerModal = openEditCustomerModal;
 window.saveCustomerModal = saveCustomerModal;
 window.deleteCustomer = deleteCustomer;
+window.toggleCustomerSort = toggleCustomerSort;
+window.changeCustomerPage = changeCustomerPage;
 window.renderPartsTable = renderPartsTable;
 window.openAddPartModal = openAddPartModal;
 window.openEditPartModal = openEditPartModal;

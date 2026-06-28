@@ -932,6 +932,11 @@
                             <h3>Customers</h3>
                         </div>
                         <div class="header-action-row-horizontal">
+                            <select id="admin-filter-customer-gst" onchange="renderCustomersTable()" class="table-search-input" style="max-width: 180px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: #ffffff;">
+                                <option value="all">All GST Status</option>
+                                <option value="registered">Registered</option>
+                                <option value="unregistered">Unregistered</option>
+                            </select>
                             <input type="text" id="admin-search-customers" class="table-search-input" placeholder="Search customers..." oninput="renderCustomersTable()">
                             <button type="button" class="btn-add-user-header" onclick="openAddCustomerModal()">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -947,8 +952,8 @@
                         <table class="data-table" id="admin-customers-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Code</th>
+                                    <th onclick="toggleCustomerSort('name')" style="cursor: pointer; user-select: none;">Name <span id="sort-icon-name" style="margin-left: 4px; font-size: 11px; color: var(--text-light);">↕</span></th>
+                                    <th onclick="toggleCustomerSort('code')" style="cursor: pointer; user-select: none;">Code <span id="sort-icon-code" style="margin-left: 4px; font-size: 11px; color: var(--text-light);">↕</span></th>
                                     <th>Notes</th>
                                     <th style="text-align: right;">Actions</th>
                                 </tr>
@@ -957,6 +962,13 @@
                                 <!-- Dynamic customer rows -->
                             </tbody>
                         </table>
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-top: 1px solid var(--border-color);">
+                            <span id="admin-customers-pagination-info" style="font-size: 13px; color: var(--text-medium);">Showing 0-0 of 0</span>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" id="admin-customers-prev-page" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-color); border-radius: 4px; background: #ffffff;" onclick="changeCustomerPage(-1)">Previous</button>
+                                <button type="button" id="admin-customers-next-page" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-color); border-radius: 4px; background: #ffffff;" onclick="changeCustomerPage(1)">Next</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
