@@ -40,8 +40,7 @@ function switchAdminTab(tabId) {
             'parts': 'Parts & Component Master',
             'tools': 'Tools & Inventory',
             'tool-requests': 'Tool Requests Control',
-            'reports': 'Performance Reports',
-            'react-dashboard': 'React Dashboard Overview'
+            'reports': 'Performance Reports'
         };
         headerTitle.textContent = titles[tabId] || 'Admin Console';
     }
