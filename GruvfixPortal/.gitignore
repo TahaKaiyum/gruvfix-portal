@@ -25,4 +25,4 @@ dist/
 build/
 
 # Config & Agent Keys
-.agents/
+.agents/mcp_config.json
