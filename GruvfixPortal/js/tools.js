@@ -127,7 +127,7 @@ function openEditToolModal(index) {
     openModal('modal-tool');
 }
 
-function saveToolModal(e) {
+async function saveToolModal(e) {
     e.preventDefault();
     
     const idxEl = document.getElementById('modal-tool-index');
@@ -148,17 +148,39 @@ function saveToolModal(e) {
     const qty = qtyEl ? (parseInt(qtyEl.value) || 0) : 0;
     const condition = condEl ? Math.min(100, Math.max(0, parseInt(condEl.value) || 0)) : 100;
     
+    const newToolObj = { name, dia, fluteLen, toolLen, toolDia, qty, condition };
+    
     if (index === -1) {
-        tools.push({ name, dia, fluteLen, toolLen, toolDia, qty, condition });
+        if (typeof dbSaveTool !== 'undefined' && supabaseClient) {
+            try {
+                await dbSaveTool(newToolObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error saving tool:", err);
+                showToast("Failed to save tool to database.", "error");
+                return;
+            }
+        } else {
+            tools.push(newToolObj);
+        }
         showToast('Tool added successfully.');
     } else if (tools[index]) {
-        tools[index].name = name;
-        tools[index].dia = dia;
-        tools[index].toolDia = toolDia;
-        tools[index].fluteLen = fluteLen;
-        tools[index].toolLen = toolLen;
-        tools[index].qty = qty;
-        tools[index].condition = condition;
+        const oldName = tools[index].name;
+        if (typeof dbSaveTool !== 'undefined' && supabaseClient) {
+            try {
+                if (oldName !== name) {
+                    await dbDeleteTool(oldName);
+                }
+                await dbSaveTool(newToolObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error updating tool:", err);
+                showToast("Failed to update tool in database.", "error");
+                return;
+            }
+        } else {
+            tools[index] = newToolObj;
+        }
         showToast('Tool updated successfully.');
     }
     
@@ -166,10 +188,21 @@ function saveToolModal(e) {
     renderToolsTable();
 }
 
-function deleteTool(index) {
+async function deleteTool(index) {
     const tool = tools[index];
     if (confirm(`Are you sure you want to delete tool "${tool.name}"?`)) {
-        tools.splice(index, 1);
+        if (typeof dbDeleteTool !== 'undefined' && supabaseClient) {
+            try {
+                await dbDeleteTool(tool.name);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error deleting tool:", err);
+                showToast("Failed to delete tool from database.", "error");
+                return;
+            }
+        } else {
+            tools.splice(index, 1);
+        }
         renderToolsTable();
         showToast(`Tool "${tool.name}" deleted.`);
     }
@@ -272,7 +305,7 @@ function handleCustomerSelectChange(val) {
     }
 }
 
-function submitToolRequest(e) {
+async function submitToolRequest(e) {
     e.preventDefault();
     if (!loggedInUser) return;
     
@@ -310,7 +343,18 @@ function submitToolRequest(e) {
         conditionOnClose: null
     };
     
-    toolRequests.push(newReq);
+    if (typeof dbSaveToolRequest !== 'undefined' && supabaseClient) {
+        try {
+            await dbSaveToolRequest(newReq);
+            await syncFromSupabase();
+        } catch (err) {
+            console.error("Error saving tool request:", err);
+            showToast("Failed to submit tool request to database.", "error");
+            return;
+        }
+    } else {
+        toolRequests.push(newReq);
+    }
     showToast('Tool request submitted successfully.');
     
     // Clear forms
@@ -334,7 +378,7 @@ function openReturnToolModal(reqId) {
     openModal('modal-return-tool');
 }
 
-function submitReturnTool(e) {
+async function submitReturnTool(e) {
     e.preventDefault();
     
     const idInput = document.getElementById('modal-return-req-id');
@@ -345,8 +389,25 @@ function submitReturnTool(e) {
     
     const req = toolRequests.find(r => r.id === reqId);
     if (req) {
-        req.status = 'Pending Close';
-        req.conditionOnClose = Math.min(100, Math.max(0, condition));
+        const updatedReq = {
+            ...req,
+            status: 'Pending Close',
+            conditionOnClose: Math.min(100, Math.max(0, condition))
+        };
+        
+        if (typeof dbSaveToolRequest !== 'undefined' && supabaseClient) {
+            try {
+                await dbSaveToolRequest(updatedReq);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error saving return request:", err);
+                showToast("Failed to submit return request to database.", "error");
+                return;
+            }
+        } else {
+            req.status = 'Pending Close';
+            req.conditionOnClose = Math.min(100, Math.max(0, condition));
+        }
         showToast('Return submitted. Tool work is over and pending admin closure.');
     }
     
@@ -395,21 +456,49 @@ function renderAdminToolRequestsTable() {
     });
 }
 
-function approveToolReturn(reqId) {
+async function approveToolReturn(reqId) {
     const req = toolRequests.find(r => r.id === reqId);
     if (!req) return;
     
     // Confirm closure
     if (confirm(`Approve return of "${req.toolName}" from ${req.employeeName} and mark request as closed?`)) {
-        req.status = 'Closed';
+        const updatedReq = {
+            ...req,
+            status: 'Closed'
+        };
         
-        // Update condition in master inventory if the tool matches by name
-        const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
-        if (masterTool && req.conditionOnClose !== null) {
-            masterTool.condition = req.conditionOnClose;
-            showToast(`Request closed. Tool "${masterTool.name}" condition updated to ${req.conditionOnClose}% in inventory.`);
+        if (typeof dbSaveToolRequest !== 'undefined' && supabaseClient) {
+            try {
+                await dbSaveToolRequest(updatedReq);
+                
+                // Update condition in master inventory if the tool matches by name
+                const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
+                if (masterTool && req.conditionOnClose !== null) {
+                    const updatedTool = {
+                        ...masterTool,
+                        condition: req.conditionOnClose
+                    };
+                    await dbSaveTool(updatedTool);
+                    showToast(`Request closed. Tool "${masterTool.name}" condition updated to ${req.conditionOnClose}% in inventory.`);
+                } else {
+                    showToast('Request closed successfully.');
+                }
+                
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error approving return:", err);
+                showToast("Failed to approve tool return in database.", "error");
+                return;
+            }
         } else {
-            showToast('Request closed successfully.');
+            req.status = 'Closed';
+            const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
+            if (masterTool && req.conditionOnClose !== null) {
+                masterTool.condition = req.conditionOnClose;
+                showToast(`Request closed. Tool "${masterTool.name}" condition updated to ${req.conditionOnClose}% in inventory.`);
+            } else {
+                showToast('Request closed successfully.');
+            }
         }
         
         renderAdminToolRequestsTable();

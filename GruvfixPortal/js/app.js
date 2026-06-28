@@ -7,7 +7,10 @@
 // ==========================================
 // 1. INITIALIZATION & LISTENERS BOOTSTRAP
 // ==========================================
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+    // Sync state from Supabase on start
+    await syncFromSupabase();
+
     // Set default date input to today
     const dateInput = document.getElementById('entry-date');
     if (dateInput) {
@@ -107,27 +110,37 @@ function addLiveTerminalLog(text, tag = 'success') {
 // ==========================================
 // 3. PERIODIC SHOP FLOOR TELEMETRY SIMULATOR
 // ==========================================
-const simOperators = ['EMP002 (Anita Rao)', 'EMP003 (Sunil Patel)', 'EMP001 (Ravi Kumar)'];
-const simCustomers = ['TATA MOTORS', 'RELIANCE INDUSTRIES', 'COIMBATORE PREMIER INDUSTRIES', 'Acme Test'];
 const simMachines = ['CNC-01', 'CNC-02', 'PNS-01', 'MLD-02'];
 const simProcesses = ['Punching', 'Molding', 'Curing', 'Trimming', 'Cutting'];
 
 setInterval(() => {
-    // Generate telemetry (simulated shift floor logs)
-    const operatorStr = simOperators[Math.floor(Math.random() * simOperators.length)];
-    const customer = simCustomers[Math.floor(Math.random() * simCustomers.length)];
+    // Generate telemetry (simulated shift floor logs) using loaded database data
+    const empUsers = users.filter(u => u.role === 'employee' && u.active);
+    if (empUsers.length === 0 || customers.length === 0) {
+        return; // Skip simulation if database is not loaded yet or has no data
+    }
+    
+    const operatorObj = empUsers[Math.floor(Math.random() * empUsers.length)];
+    const customerObj = customers[Math.floor(Math.random() * customers.length)];
+    
+    const empId = operatorObj.empid;
+    const customer = customerObj.name;
     const machine = simMachines[Math.floor(Math.random() * simMachines.length)];
     const process = simProcesses[Math.floor(Math.random() * simProcesses.length)];
     const qty = Math.floor(Math.random() * 40) + 10;
-    
-    const empId = operatorStr.split(' ')[0];
     
     // Look up part choice dynamically
     const customerParts = parts.filter(p => p.customer === customer);
     let partNo = 'PT-A';
     let component = 'Acme Primary Gasket';
+    
     if (customerParts.length > 0) {
         const pObj = customerParts[Math.floor(Math.random() * customerParts.length)];
+        partNo = pObj.partNo;
+        component = pObj.component;
+    } else if (parts.length > 0) {
+        // Fallback to any part if customer doesn't have parts mapped yet
+        const pObj = parts[Math.floor(Math.random() * parts.length)];
         partNo = pObj.partNo;
         component = pObj.component;
     }
@@ -150,7 +163,25 @@ setInterval(() => {
         shift: 'Day Shift' // Default shift for simulation
     };
     
-    historicalEntries.unshift(simulatedEntry);
+    if (typeof dbSaveLog !== 'undefined' && supabaseClient) {
+        dbSaveLog(simulatedEntry).then(() => {
+            syncFromSupabase().then(() => {
+                if (isLoggedIn && currentRole === 'admin') {
+                    const activeTabEl = document.querySelector('#admin-dashboard .tab-view.active');
+                    if (activeTabEl) {
+                        const activeTabId = activeTabEl.id;
+                        if (activeTabId === 'admin-view-dashboard') {
+                            updateAdminDashboard();
+                        } else if (activeTabId === 'admin-view-entries') {
+                            renderAdminEntriesTable();
+                        }
+                    }
+                }
+            });
+        }).catch(err => console.error("Error saving simulated entry:", err));
+    } else {
+        historicalEntries.unshift(simulatedEntry);
+    }
     
     // If we're on the login screen, show updates in real-time
     if (!isLoggedIn) {

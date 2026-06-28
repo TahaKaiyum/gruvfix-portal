@@ -4,6 +4,8 @@
  * @project GruvfixPortal
  */
 
+var supabaseClient = window.supabaseClient;
+
 // ==========================================
 // 1. APPLICATION STATE
 // ==========================================
@@ -46,216 +48,12 @@ function getRelativeDateString(offsetDays) {
 // ==========================================
 // 3. MASTER DATA STORES
 // ==========================================
-let users = [
-    { empid: 'EMP001', name: 'Ravi Kumar', email: 'ravi@gruvfix.com', password: 'Emp@12345', role: 'employee', active: true },
-    { empid: 'EMP002', name: 'Anita Rao', email: 'anita@gruvfix.com', password: 'Emp@12345', role: 'employee', active: true },
-    { empid: 'EMP003', name: 'Sunil Patel', email: 'sunil@gruvfix.com', password: 'Emp@12345', role: 'employee', active: true },
-    { empid: 'EMP004', name: 'John Doe', email: 'john@gruvfix.com', password: 'Emp@12345', role: 'employee', active: false }, // inactive
-    { empid: '', name: 'Administrator', email: 'admin@gruvfix.com', password: 'Admin123', role: 'admin', active: true }
-];
-
-let customers = [
-    { name: 'Acme Test', code: 'ACME', notes: 'Standard test customer' },
-    { name: 'COIMBATORE PREMIER INDUSTRIES', code: 'CPI', notes: 'Key manufacturing client' },
-    { name: 'TATA MOTORS', code: 'TM', notes: 'Automotive components' },
-    { name: 'RELIANCE INDUSTRIES', code: 'RI', notes: 'Industrial gaskets division' }
-];
-
-let parts = [
-    { partNo: 'PT-A', component: 'Acme Primary Gasket', customer: 'Acme Test', process: 'Cutting' },
-    { partNo: 'PT-B', component: 'Acme Secondary Gasket', customer: 'Acme Test', process: 'Cutting' },
-    { partNo: 'PT-C', component: 'Acme High Temp Seal', customer: 'Acme Test', process: 'Molding' },
-    { partNo: 'AV030ME0283', component: 'Engine Block Gasket M10', customer: 'COIMBATORE PREMIER INDUSTRIES', process: 'Cutting' },
-    { partNo: 'AV030ME0284', component: 'Engine Head Gasket M12', customer: 'COIMBATORE PREMIER INDUSTRIES', process: 'Punching' },
-    { partNo: 'AV030ME0285', component: 'Flange Gasket 4 Inch', customer: 'COIMBATORE PREMIER INDUSTRIES', process: 'Molding' },
-    { partNo: 'TM-GASK-04', component: 'Tata Manifold Gasket', customer: 'TATA MOTORS', process: 'Punching' },
-    { partNo: 'TM-GASK-05', component: 'Tata Exhaust Gasket', customer: 'TATA MOTORS', process: 'Trimming' },
-    { partNo: 'TM-SEAL-12', component: 'Tata Water Pump Seal', customer: 'TATA MOTORS', process: 'Curing' },
-    { partNo: 'RL-SEAL-89', component: 'Reliance Heavy Duty Seal', customer: 'RELIANCE INDUSTRIES', process: 'Molding' },
-    { partNo: 'RL-SEAL-90', component: 'Reliance High Pressure Ring', customer: 'RELIANCE INDUSTRIES', process: 'Curing' }
-];
-
-let tools = [
-    { name: 'Carbide End Mill - 4 Flute', dia: '10mm', fluteLen: '25mm', toolLen: '75mm', toolDia: '10mm', qty: 12, condition: 90 },
-    { name: 'HSS Drill Bit', dia: '8mm', fluteLen: '50mm', toolLen: '100mm', toolDia: '8mm', qty: 8, condition: 75 },
-    { name: 'Face Mill Cutter', dia: '20mm', fluteLen: '15mm', toolLen: '60mm', toolDia: '50mm', qty: 3, condition: 45 }
-];
-
-let toolRequests = [
-    {
-        id: 'req-1',
-        employeeId: 'EMP001',
-        employeeName: 'Ravi Kumar',
-        customer: 'TATA MOTORS',
-        toolName: 'Carbide End Mill - 4 Flute',
-        requirements: 'Dia: 10mm, Flute Length: 25mm, Tool Length: 75mm, Tool Dia: 10mm, Qty: 2. For Tata Manifold Gasket milling.',
-        status: 'Requested',
-        conditionOnClose: null
-    },
-    {
-        id: 'req-2',
-        employeeId: 'EMP002',
-        employeeName: 'Anita Rao',
-        customer: 'COIMBATORE PREMIER INDUSTRIES',
-        toolName: 'HSS Drill Bit',
-        requirements: 'Dia: 8mm, Flute Length: 50mm, Tool Length: 100mm, Qty: 1. For Engine Head Gasket drilling.',
-        status: 'Pending Close',
-        conditionOnClose: 85
-    }
-];
-
-let historicalEntries = [
-    {
-        id: 'hist-1',
-        date: getRelativeDateString(0), // today
-        hour: '09:00 - 10:00',
-        customer: 'Acme Test',
-        part: 'PT-A',
-        component: 'Acme Primary Gasket',
-        process: 'Cutting',
-        qty: 25,
-        machine: 'CNC-01',
-        status: 'completed',
-        file: '—',
-        locked: false,
-        employee: 'EMP001'
-    },
-    {
-        id: 'hist-2',
-        date: getRelativeDateString(0), // today
-        hour: '10:00 - 11:00',
-        customer: 'TATA MOTORS',
-        part: 'TM-GASK-04',
-        component: 'Tata Manifold Gasket',
-        process: 'Punching',
-        qty: 40,
-        machine: 'PNS-01',
-        status: 'pending',
-        file: 'test_manifold.pdf',
-        locked: false,
-        employee: 'EMP002'
-    },
-    {
-        id: 'hist-3',
-        date: getRelativeDateString(0), // today
-        hour: '14:00 - 15:00',
-        customer: 'RELIANCE INDUSTRIES',
-        part: 'RL-SEAL-90',
-        component: 'Reliance High Pressure Ring',
-        process: 'Curing',
-        qty: 15,
-        machine: 'CNC-02',
-        status: 'completed',
-        file: '—',
-        locked: false,
-        employee: 'EMP003'
-    },
-    {
-        id: 'hist-4',
-        date: getRelativeDateString(0), // today
-        hour: '15:00 - 16:00',
-        customer: 'COIMBATORE PREMIER INDUSTRIES',
-        part: 'AV030ME0284',
-        component: 'Engine Head Gasket M12',
-        process: 'Punching',
-        qty: 30,
-        machine: 'CNC-03',
-        status: 'rework',
-        file: 'head_gasket_check.png',
-        locked: false,
-        employee: 'EMP001'
-    },
-    {
-        id: 'hist-5',
-        date: getRelativeDateString(1), // yesterday
-        hour: '11:00 - 12:00',
-        customer: 'TATA MOTORS',
-        part: 'TM-SEAL-12',
-        component: 'Tata Water Pump Seal',
-        process: 'Curing',
-        qty: 60,
-        machine: 'MLD-02',
-        status: 'completed',
-        file: '—',
-        locked: true,
-        employee: 'EMP003'
-    },
-    {
-        id: 'hist-6',
-        date: getRelativeDateString(2), // 2 days ago
-        hour: '16:00 - 17:00',
-        customer: 'Acme Test',
-        part: 'PT-B',
-        component: 'Acme Secondary Gasket',
-        process: 'Cutting',
-        qty: 18,
-        machine: 'CNC-01',
-        status: 'hold',
-        file: 'hold_spec.xlsx',
-        locked: true,
-        employee: 'EMP002'
-    },
-    {
-        id: 'hist-7',
-        date: getRelativeDateString(3), // 3 days ago
-        hour: '08:00 - 09:00',
-        customer: 'RELIANCE INDUSTRIES',
-        part: 'RL-SEAL-89',
-        component: 'Reliance Heavy Duty Seal',
-        process: 'Molding',
-        qty: 45,
-        machine: 'MLD-02',
-        status: 'completed',
-        file: '—',
-        locked: true,
-        employee: 'EMP001'
-    },
-    {
-        id: 'hist-8',
-        date: getRelativeDateString(4), // 4 days ago
-        hour: '13:00 - 14:00',
-        customer: 'COIMBATORE PREMIER INDUSTRIES',
-        part: 'AV030ME0283',
-        component: 'Engine Block Gasket M10',
-        process: 'Cutting',
-        qty: 28,
-        machine: 'CNC-03',
-        status: 'rework',
-        file: 'coimbatore_block.png',
-        locked: true,
-        employee: 'EMP003'
-    },
-    {
-        id: 'hist-9',
-        date: getRelativeDateString(5), // 5 days ago
-        hour: '18:00 - 19:00',
-        customer: 'TATA MOTORS',
-        part: 'TM-GASK-04',
-        component: 'Tata Manifold Gasket',
-        process: 'Punching',
-        qty: 50,
-        machine: 'PNS-01',
-        status: 'completed',
-        file: '—',
-        locked: true,
-        employee: 'EMP002'
-    },
-    {
-        id: 'hist-10',
-        date: getRelativeDateString(6), // 6 days ago
-        hour: '09:00 - 10:00',
-        customer: 'Acme Test',
-        part: 'PT-A',
-        component: 'Acme Primary Gasket',
-        process: 'Cutting',
-        qty: 35,
-        machine: 'CNC-01',
-        status: 'completed',
-        file: '—',
-        locked: true,
-        employee: 'EMP001'
-    }
-];
+let users = [];
+let customers = [];
+let parts = [];
+let tools = [];
+let toolRequests = [];
+let historicalEntries = [];
 
 let todayEntries = [];
 
@@ -411,3 +209,259 @@ function openLogDetailsModal(id) {
     
     openModal('modal-log-details');
 }
+
+// ==========================================
+// 7. SUPABASE DATABASE SYNC & CRUD OPERATIONS
+// ==========================================
+async function syncFromSupabase() {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+        console.warn("Supabase client not initialized, using local mock data.");
+        return;
+    }
+    
+    try {
+        // 1. Fetch Users
+        const { data: dbUsers, error: usersErr } = await supabaseClient
+            .from('users')
+            .select('*');
+        if (usersErr) throw usersErr;
+        users = dbUsers.map(u => ({
+            empid: u.empid === 'ADMIN' ? '' : u.empid,
+            name: u.name,
+            email: u.email,
+            password: u.password,
+            role: u.role,
+            active: u.active
+        }));
+        
+        // 2. Fetch Customers
+        const { data: dbCustomers, error: custErr } = await supabaseClient
+            .from('customers')
+            .select('*');
+        if (custErr) throw custErr;
+        customers = dbCustomers.map(c => ({
+            name: c.name,
+            code: c.code,
+            notes: c.notes,
+            contact: c.contact,
+            gst: c.gst
+        }));
+        
+        // 3. Fetch Parts
+        const { data: dbParts, error: partsErr } = await supabaseClient
+            .from('parts')
+            .select('*');
+        if (partsErr) throw partsErr;
+        parts = dbParts.map(p => ({
+            partNo: p.part_no,
+            component: p.component,
+            customer: p.customer,
+            process: p.process
+        }));
+        
+        // 4. Fetch Tools
+        const { data: dbTools, error: toolsErr } = await supabaseClient
+            .from('tools')
+            .select('*');
+        if (toolsErr) throw toolsErr;
+        tools = dbTools.map(t => ({
+            name: t.name,
+            dia: t.dia,
+            fluteLen: t.flute_len,
+            toolLen: t.tool_len,
+            toolDia: t.tool_dia,
+            qty: t.qty,
+            condition: t.condition
+        }));
+        
+        // 5. Fetch Tool Requests
+        const { data: dbRequests, error: reqErr } = await supabaseClient
+            .from('tool_requests')
+            .select('*');
+        if (reqErr) throw reqErr;
+        toolRequests = dbRequests.map(r => ({
+            id: r.id,
+            employeeId: r.employee_id,
+            employeeName: r.employee_name,
+            customer: r.customer,
+            toolName: r.tool_name,
+            requirements: r.requirements,
+            status: r.status,
+            conditionOnClose: r.condition_on_close
+        }));
+        
+        // 6. Fetch Logs
+        const { data: dbLogs, error: logsErr } = await supabaseClient
+            .from('logs')
+            .select('*')
+            .order('id', { ascending: false });
+        if (logsErr) throw logsErr;
+        historicalEntries = dbLogs.map(l => ({
+            id: l.id,
+            date: l.date,
+            hour: l.hour,
+            customer: l.customer,
+            part: l.part,
+            component: l.component,
+            process: l.process,
+            qty: l.qty,
+            machine: l.machine,
+            status: l.status,
+            file: l.file,
+            locked: l.locked,
+            employee: l.employee,
+            shift: l.shift
+        }));
+        
+        console.log("State synced from Supabase successfully!");
+    } catch (err) {
+        console.error("Error syncing from Supabase:", err);
+        showToast("Database sync error. Using offline state.", "error");
+    }
+}
+
+async function dbSaveUser(userObj) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const dbEmpid = userObj.empid === '' ? 'ADMIN' : userObj.empid;
+    const { error } = await supabaseClient
+        .from('users')
+        .upsert({
+            empid: dbEmpid,
+            name: userObj.name,
+            email: userObj.email,
+            password: userObj.password,
+            role: userObj.role,
+            active: userObj.active
+        });
+    if (error) throw error;
+}
+
+async function dbDeleteUser(empid) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const dbEmpid = empid === '' ? 'ADMIN' : empid;
+    const { error } = await supabaseClient
+        .from('users')
+        .delete()
+        .eq('empid', dbEmpid);
+    if (error) throw error;
+}
+
+async function dbSaveCustomer(custObj) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('customers')
+        .upsert({
+            name: custObj.name,
+            code: custObj.code,
+            notes: custObj.notes,
+            contact: custObj.contact,
+            gst: custObj.gst
+        });
+    if (error) throw error;
+}
+
+async function dbDeleteCustomer(name) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('customers')
+        .delete()
+        .eq('name', name);
+    if (error) throw error;
+}
+
+async function dbSavePart(partObj) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('parts')
+        .upsert({
+            part_no: partObj.partNo,
+            component: partObj.component,
+            customer: partObj.customer,
+            process: partObj.process
+        });
+    if (error) throw error;
+}
+
+async function dbDeletePart(partNo) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('parts')
+        .delete()
+        .eq('part_no', partNo);
+    if (error) throw error;
+}
+
+async function dbSaveToolRequest(reqObj) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('tool_requests')
+        .upsert({
+            id: reqObj.id,
+            employee_id: reqObj.employeeId,
+            employee_name: reqObj.employeeName,
+            customer: reqObj.customer,
+            tool_name: reqObj.toolName,
+            requirements: reqObj.requirements,
+            status: reqObj.status,
+            condition_on_close: reqObj.conditionOnClose
+        });
+    if (error) throw error;
+}
+
+async function dbSaveLog(logObj) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('logs')
+        .upsert({
+            id: logObj.id,
+            date: logObj.date,
+            hour: logObj.hour,
+            customer: logObj.customer,
+            part: logObj.part,
+            component: logObj.component,
+            process: logObj.process,
+            qty: logObj.qty,
+            machine: logObj.machine,
+            status: logObj.status,
+            file: logObj.file,
+            locked: logObj.locked,
+            employee: logObj.employee,
+            shift: logObj.shift
+        });
+    if (error) throw error;
+}
+
+async function dbDeleteLog(id) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('logs')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+}
+
+async function dbSaveTool(toolObj) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('tools')
+        .upsert({
+            name: toolObj.name,
+            dia: toolObj.dia,
+            flute_len: toolObj.fluteLen,
+            tool_len: toolObj.toolLen,
+            tool_dia: toolObj.toolDia,
+            qty: toolObj.qty,
+            condition: toolObj.condition
+        });
+    if (error) throw error;
+}
+
+async function dbDeleteTool(name) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('tools')
+        .delete()
+        .eq('name', name);
+    if (error) throw error;
+}
+

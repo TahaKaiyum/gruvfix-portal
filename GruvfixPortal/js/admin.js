@@ -396,10 +396,22 @@ function resetAdminFilters() {
     filterAdminEntries();
 }
 
-function deleteAdminEntry(id) {
+async function deleteAdminEntry(id) {
     if (confirm('Are you sure you want to delete this work entry?')) {
-        historicalEntries = historicalEntries.filter(e => e.id !== id);
-        todayEntries = todayEntries.filter(e => e.id !== id);
+        if (typeof dbDeleteLog !== 'undefined' && supabaseClient) {
+            try {
+                await dbDeleteLog(id);
+                await syncFromSupabase();
+                todayEntries = todayEntries.filter(e => e.id !== id);
+            } catch (err) {
+                console.error("Error deleting entry:", err);
+                showToast("Failed to delete entry from database.", "error");
+                return;
+            }
+        } else {
+            historicalEntries = historicalEntries.filter(e => e.id !== id);
+            todayEntries = todayEntries.filter(e => e.id !== id);
+        }
         
         renderAdminEntriesTable();
         updateAdminDashboard();
@@ -407,12 +419,30 @@ function deleteAdminEntry(id) {
     }
 }
 
-function updateEntryStatus(id, newStatus) {
+async function updateEntryStatus(id, newStatus) {
     const entry = historicalEntries.find(e => e.id === id);
     if (entry) {
-        entry.status = newStatus;
-        const todayEntry = todayEntries.find(e => e.id === id);
-        if (todayEntry) todayEntry.status = newStatus;
+        const updatedEntry = {
+            ...entry,
+            status: newStatus
+        };
+        
+        if (typeof dbSaveLog !== 'undefined' && supabaseClient) {
+            try {
+                await dbSaveLog(updatedEntry);
+                await syncFromSupabase();
+                const todayEntry = todayEntries.find(e => e.id === id);
+                if (todayEntry) todayEntry.status = newStatus;
+            } catch (err) {
+                console.error("Error updating status:", err);
+                showToast("Failed to update status in database.", "error");
+                return;
+            }
+        } else {
+            entry.status = newStatus;
+            const todayEntry = todayEntries.find(e => e.id === id);
+            if (todayEntry) todayEntry.status = newStatus;
+        }
         
         updateAdminDashboard();
         filterAdminEntries();
@@ -510,7 +540,7 @@ function toggleUserModalFields() {
     }
 }
 
-function saveUserModal(e) {
+async function saveUserModal(e) {
     e.preventDefault();
     const index = parseInt(document.getElementById('modal-user-index').value);
     const role = document.getElementById('modal-user-role').value;
@@ -519,32 +549,68 @@ function saveUserModal(e) {
     const password = document.getElementById('modal-user-password').value;
     const active = document.getElementById('modal-user-active').value === 'true';
     
+    const newUserObj = {
+        empid: role === 'admin' ? '' : empid,
+        name: email.split('@')[0],
+        email,
+        password,
+        role,
+        active
+    };
+    
     if (index === -1) {
         if (!password) {
             showToast('Password is required for new users.', 'error');
             return;
         }
-        users.push({
-            empid: role === 'admin' ? '' : empid,
-            name: email.split('@')[0],
-            email,
-            password,
-            role,
-            active
-        });
+        if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
+            try {
+                await dbSaveUser(newUserObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error creating user:", err);
+                showToast("Failed to create user in database.", "error");
+                return;
+            }
+        } else {
+            users.push(newUserObj);
+        }
         showToast('User created successfully.');
     } else {
         const user = users[index];
         const oldEmpId = user.empid;
         
-        user.role = role;
-        user.empid = role === 'admin' ? '' : empid;
-        user.email = email;
-        user.active = active;
-        if (password) user.password = password;
+        const updatedUserObj = {
+            empid: role === 'admin' ? '' : empid,
+            name: email.split('@')[0],
+            email,
+            password: password || user.password,
+            role,
+            active
+        };
         
-        if (role === 'employee') {
-            cascadeEmployeeUpdate(oldEmpId, empid);
+        if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
+            try {
+                if (oldEmpId !== updatedUserObj.empid) {
+                    await dbDeleteUser(oldEmpId);
+                }
+                await dbSaveUser(updatedUserObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error updating user:", err);
+                showToast("Failed to update user in database.", "error");
+                return;
+            }
+        } else {
+            user.role = role;
+            user.empid = role === 'admin' ? '' : empid;
+            user.email = email;
+            user.active = active;
+            if (password) user.password = password;
+            
+            if (role === 'employee') {
+                cascadeEmployeeUpdate(oldEmpId, empid);
+            }
         }
         showToast('User updated successfully.');
     }
@@ -555,26 +621,52 @@ function saveUserModal(e) {
     updateAdminDashboard();
 }
 
-function toggleUserActiveStatus(index) {
+async function toggleUserActiveStatus(index) {
     const user = users[index];
     if (user.email === 'admin@gruvfix.com') {
         showToast('Cannot deactivate the main administrator.', 'error');
         return;
     }
-    user.active = !user.active;
+    const updatedUser = {
+        ...user,
+        active: !user.active
+    };
+    if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
+        try {
+            await dbSaveUser(updatedUser);
+            await syncFromSupabase();
+        } catch (err) {
+            console.error("Error toggling user status:", err);
+            showToast("Failed to toggle user status in database.", "error");
+            return;
+        }
+    } else {
+        user.active = !user.active;
+    }
     renderUsersTable();
     updateAdminDashboard();
     showToast(`User ${user.empid || user.email} active status toggled.`);
 }
 
-function deleteUser(index) {
+async function deleteUser(index) {
     const user = users[index];
     if (user.email === 'admin@gruvfix.com') {
         showToast('Cannot delete the main administrator.', 'error');
         return;
     }
     if (confirm(`Are you sure you want to delete user ${user.empid || user.email}?`)) {
-        users.splice(index, 1);
+        if (typeof dbDeleteUser !== 'undefined' && supabaseClient) {
+            try {
+                await dbDeleteUser(user.empid);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error deleting user:", err);
+                showToast("Failed to delete user from database.", "error");
+                return;
+            }
+        } else {
+            users.splice(index, 1);
+        }
         renderUsersTable();
         populateFilterDropdowns();
         updateAdminDashboard();
@@ -656,7 +748,7 @@ function openEditCustomerModal(index) {
     openModal('modal-customer');
 }
 
-function saveCustomerModal(e) {
+async function saveCustomerModal(e) {
     e.preventDefault();
     const index = parseInt(document.getElementById('modal-customer-index').value);
     const name = document.getElementById('modal-customer-name').value.trim();
@@ -665,8 +757,21 @@ function saveCustomerModal(e) {
     const code = document.getElementById('modal-customer-code').value.trim();
     const notes = document.getElementById('modal-customer-notes').value.trim();
     
+    const newCustObj = { name, code, notes, contact, gst };
+    
     if (index === -1) {
-        customers.push({ name, code, notes, contact, gst });
+        if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+            try {
+                await dbSaveCustomer(newCustObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error creating customer:", err);
+                showToast("Failed to add customer to database.", "error");
+                return;
+            }
+        } else {
+            customers.push(newCustObj);
+        }
         showToast('Customer added successfully.');
         
         if (activeRowIdForCustomerDropdown !== null) {
@@ -675,13 +780,28 @@ function saveCustomerModal(e) {
         }
     } else {
         const oldName = customers[index].name;
-        customers[index].name = name;
-        customers[index].code = code;
-        customers[index].notes = notes;
-        customers[index].contact = contact;
-        customers[index].gst = gst;
         
-        cascadeCustomerUpdate(oldName, name);
+        if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+            try {
+                if (oldName !== name) {
+                    await dbDeleteCustomer(oldName);
+                }
+                await dbSaveCustomer(newCustObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error updating customer:", err);
+                showToast("Failed to update customer in database.", "error");
+                return;
+            }
+        } else {
+            customers[index].name = name;
+            customers[index].code = code;
+            customers[index].notes = notes;
+            customers[index].contact = contact;
+            customers[index].gst = gst;
+            
+            cascadeCustomerUpdate(oldName, name);
+        }
         showToast('Customer updated successfully.');
     }
     
@@ -691,13 +811,25 @@ function saveCustomerModal(e) {
     updateAdminDashboard();
 }
 
-function deleteCustomer(index) {
+async function deleteCustomer(index) {
     const cust = customers[index];
     if (confirm(`Deleting "${cust.name}" will also delete all their Parts. Are you sure you want to proceed?`)) {
         const name = cust.name;
-        parts = parts.filter(p => p.customer !== name);
         
-        customers.splice(index, 1);
+        if (typeof dbDeleteCustomer !== 'undefined' && supabaseClient) {
+            try {
+                await dbDeleteCustomer(name);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error deleting customer:", err);
+                showToast("Failed to delete customer from database.", "error");
+                return;
+            }
+        } else {
+            parts = parts.filter(p => p.customer !== name);
+            customers.splice(index, 1);
+        }
+        
         renderCustomersTable();
         renderPartsTable();
         populateFilterDropdowns();
@@ -798,7 +930,7 @@ function openEditPartModal(index) {
     openModal('modal-part');
 }
 
-function savePartModal(e) {
+async function savePartModal(e) {
     e.preventDefault();
     const index = parseInt(document.getElementById('modal-part-index').value);
     const partNo = document.getElementById('modal-part-no').value.trim();
@@ -806,8 +938,21 @@ function savePartModal(e) {
     const customer = document.getElementById('modal-part-customer').value;
     const process = document.getElementById('modal-part-process').value.trim();
     
+    const newPartObj = { partNo, component, customer, process };
+    
     if (index === -1) {
-        parts.push({ partNo, component, customer, process });
+        if (typeof dbSavePart !== 'undefined' && supabaseClient) {
+            try {
+                await dbSavePart(newPartObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error creating part:", err);
+                showToast("Failed to create part in database.", "error");
+                return;
+            }
+        } else {
+            parts.push(newPartObj);
+        }
         showToast('Part created successfully.');
         
         if (activeRowIdForPartDropdown !== null) {
@@ -816,12 +961,27 @@ function savePartModal(e) {
         }
     } else {
         const oldPartNo = parts[index].partNo;
-        parts[index].partNo = partNo;
-        parts[index].component = component;
-        parts[index].customer = customer;
-        parts[index].process = process;
         
-        cascadePartUpdate(customer, oldPartNo, partNo, component);
+        if (typeof dbSavePart !== 'undefined' && supabaseClient) {
+            try {
+                if (oldPartNo !== partNo) {
+                    await dbDeletePart(oldPartNo);
+                }
+                await dbSavePart(newPartObj);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error updating part:", err);
+                showToast("Failed to update part in database.", "error");
+                return;
+            }
+        } else {
+            parts[index].partNo = partNo;
+            parts[index].component = component;
+            parts[index].customer = customer;
+            parts[index].process = process;
+            
+            cascadePartUpdate(customer, oldPartNo, partNo, component);
+        }
         showToast('Part updated successfully.');
     }
     
@@ -830,10 +990,21 @@ function savePartModal(e) {
     updateAdminDashboard();
 }
 
-function deletePart(index) {
+async function deletePart(index) {
     const part = parts[index];
     if (confirm(`Are you sure you want to delete part "${part.partNo}"?`)) {
-        parts.splice(index, 1);
+        if (typeof dbDeletePart !== 'undefined' && supabaseClient) {
+            try {
+                await dbDeletePart(part.partNo);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error deleting part:", err);
+                showToast("Failed to delete part from database.", "error");
+                return;
+            }
+        } else {
+            parts.splice(index, 1);
+        }
         renderPartsTable();
         updateAdminDashboard();
         showToast('Part deleted.');

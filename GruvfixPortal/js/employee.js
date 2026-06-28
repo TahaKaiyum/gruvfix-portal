@@ -273,7 +273,7 @@ function resetForm() {
 // 3. LOG ENTRIES CONTROLLER
 // ==========================================
 
-function saveWorkEntries(e) {
+async function saveWorkEntries(e) {
     e.preventDefault();
     
     const date = document.getElementById('entry-date').value;
@@ -305,6 +305,7 @@ function saveWorkEntries(e) {
     if (validationFailed) return;
     
     // Write entries to store
+    const savePromises = [];
     partRows.forEach(row => {
         const rowId = `entry-${Date.now()}-${row.id}`;
         const rowCust = row.customer;
@@ -324,15 +325,30 @@ function saveWorkEntries(e) {
             qty: row.qty,
             machine: machine,
             status: status,
-            file: row.fileName,
+            file: row.fileName || '—',
             locked: false,
             employee: loggedInUser.empid,
             shift: shift // Preserve selected shift
         };
         
-        todayEntries.push(newEntry);
-        historicalEntries.unshift(newEntry); // Prepend to history
+        if (typeof dbSaveLog !== 'undefined' && supabaseClient) {
+            savePromises.push(dbSaveLog(newEntry));
+        } else {
+            todayEntries.push(newEntry);
+            historicalEntries.unshift(newEntry); // Prepend to history
+        }
     });
+    
+    if (savePromises.length > 0) {
+        try {
+            await Promise.all(savePromises);
+            await syncFromSupabase();
+        } catch (err) {
+            console.error("Error saving to database:", err);
+            showToast("Failed to save entries to Supabase database.", "error");
+            return;
+        }
+    }
     
     // Adjust Shift Stats indicator
     const totalQtyLogged = partRows.reduce((sum, r) => sum + r.qty, 0);
@@ -343,6 +359,11 @@ function saveWorkEntries(e) {
     }
     
     addLiveTerminalLog(`Operator ${loggedInUser.empid} logged ${totalQtyLogged} parts`, 'success');
+    
+    // Seed todayEntries dynamically
+    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        todayEntries = historicalEntries.filter(e => e.date === getTodayDateString() && e.employee === loggedInUser?.empid);
+    }
     
     // Re-render views
     updateEmployeeStats();
@@ -406,10 +427,22 @@ function renderTodayEntriesTable() {
     });
 }
 
-function deleteTodayEntry(entryId) {
+async function deleteTodayEntry(entryId) {
     if (confirm('Are you sure you want to delete this entry?')) {
-        historicalEntries = historicalEntries.filter(e => e.id !== entryId);
-        todayEntries = todayEntries.filter(e => e.id !== entryId);
+        if (typeof dbDeleteLog !== 'undefined' && supabaseClient) {
+            try {
+                await dbDeleteLog(entryId);
+                await syncFromSupabase();
+                todayEntries = todayEntries.filter(e => e.id !== entryId);
+            } catch (err) {
+                console.error("Error deleting from database:", err);
+                showToast("Failed to delete entry from database.", "error");
+                return;
+            }
+        } else {
+            historicalEntries = historicalEntries.filter(e => e.id !== entryId);
+            todayEntries = todayEntries.filter(e => e.id !== entryId);
+        }
         
         updateEmployeeStats();
         renderTodayEntriesTable();

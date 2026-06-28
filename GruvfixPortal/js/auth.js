@@ -22,15 +22,21 @@ function switchRole(role) {
         tabEmployee.classList.remove('active');
         formInstruction.textContent = 'LOGIN WITH ADMIN EMAIL';
         labelUsername.textContent = 'EMAIL';
-        inputUsername.placeholder = 'admin@gruvfix.com';
-        inputUsername.value = 'admin@gruvfix.com';
+        
+        const dbAdmin = typeof users !== 'undefined' ? users.find(u => u.role === 'admin' && u.active) : null;
+        const defaultAdminEmail = dbAdmin ? dbAdmin.email : 'admin@gruvfix.com';
+        inputUsername.placeholder = defaultAdminEmail;
+        inputUsername.value = defaultAdminEmail;
     } else {
         tabAdmin.classList.remove('active');
         tabEmployee.classList.add('active');
         formInstruction.textContent = 'LOGIN WITH EMPLOYEE ID';
         labelUsername.textContent = 'EMPLOYEE ID';
-        inputUsername.placeholder = 'e.g., EMP001';
-        inputUsername.value = 'EMP001';
+        
+        const dbEmp = typeof users !== 'undefined' ? users.find(u => u.role === 'employee' && u.active) : null;
+        const defaultEmpId = dbEmp ? dbEmp.empid : 'EMP001';
+        inputUsername.placeholder = 'e.g., ' + defaultEmpId;
+        inputUsername.value = defaultEmpId;
     }
     
     document.getElementById('login-password').value = '';
