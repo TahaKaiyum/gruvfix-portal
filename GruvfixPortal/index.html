@@ -629,6 +629,14 @@
                             </svg>
                             Reports
                         </button>
+                        <button type="button" id="admin-menu-react-dashboard" class="menu-item" onclick="switchAdminTab('react-dashboard')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                                <polyline points="2 17 12 22 22 17"/>
+                                <polyline points="2 12 12 17 22 12"/>
+                            </svg>
+                            React Dashboard
+                        </button>
                     </nav>
                 </div>
 
@@ -1225,6 +1233,11 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- TAB: React Dashboard -->
+                <div id="admin-view-react-dashboard" class="tab-view">
+                    <div id="react-root"></div>
+                </div>
             </main>
         </div>
     </div>
@@ -1507,5 +1520,6 @@
     <!-- Script Files -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="src/js/app.js?v=2.2.0"></script>
+    <script type="module" src="src/main.tsx"></script>
 </body>
 </html>
