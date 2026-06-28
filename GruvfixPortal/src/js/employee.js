@@ -409,13 +409,14 @@ function renderTodayEntriesTable() {
         const tr = document.createElement('tr');
         
         let fileLinkHtml = '—';
-        if (entry.file !== '—') {
+        const fileVal = entry.file || '—';
+        if (fileVal !== '—') {
             fileLinkHtml = `
-                <a href="#" class="table-file-link" onclick="event.preventDefault(); alert('Opening file: ${entry.file}');" title="${entry.file}">
+                <a href="#" class="table-file-link" onclick="event.preventDefault(); alert('Opening file: ${fileVal}');" title="${fileVal}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                     </svg>
-                    ${entry.file.substring(0, 10)}${entry.file.length > 10 ? '...' : ''}
+                    ${fileVal.substring(0, 10)}${fileVal.length > 10 ? '...' : ''}
                 </a>
             `;
         }
@@ -507,13 +508,14 @@ function renderHistoryTable() {
         const tr = document.createElement('tr');
         
         let fileLinkHtml = '—';
-        if (entry.file !== '—') {
+        const fileVal = entry.file || '—';
+        if (fileVal !== '—') {
             fileLinkHtml = `
-                <a href="#" class="table-file-link" onclick="event.preventDefault(); alert('Opening file: ${entry.file}');" title="${entry.file}">
+                <a href="#" class="table-file-link" onclick="event.preventDefault(); alert('Opening file: ${fileVal}');" title="${fileVal}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                     </svg>
-                    ${entry.file.substring(0, 15)}${entry.file.length > 15 ? '...' : ''}
+                    ${fileVal.substring(0, 15)}${fileVal.length > 15 ? '...' : ''}
                 </a>
             `;
         }
