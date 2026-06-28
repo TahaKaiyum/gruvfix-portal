@@ -91,6 +91,7 @@ function handleLogin(e) {
     // Successful Login
     isLoggedIn = true;
     loggedInUser = user;
+    saveSession(user);
     
     if (currentRole === 'admin') {
         // Update header and sidebar values for admin
@@ -142,6 +143,7 @@ function handleLogin(e) {
 function logout() {
     isLoggedIn = false;
     loggedInUser = null;
+    clearSession();
     const activeDashboard = currentRole === 'admin' ? 'admin-dashboard' : 'employee-dashboard';
     transitionPages(activeDashboard, 'login-page');
     document.getElementById('login-password').value = '';

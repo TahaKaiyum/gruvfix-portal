@@ -11,6 +11,67 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Sync state from Supabase on start
     await syncFromSupabase();
 
+    // Restore Session if it exists
+    const cachedUser = getSession();
+    if (cachedUser) {
+        // Find matching user in the database users list
+        const dbUser = users.find(u => {
+            if (cachedUser.role === 'admin') {
+                return u.email.toLowerCase() === cachedUser.email.toLowerCase() && u.role === 'admin';
+            } else {
+                return u.empid.toLowerCase() === cachedUser.empid.toLowerCase() && u.role === 'employee';
+            }
+        });
+
+        if (dbUser && dbUser.active) {
+            // Restore user session!
+            isLoggedIn = true;
+            loggedInUser = dbUser;
+            currentRole = dbUser.role;
+            
+            // Set sidebar names and info
+            const sideNames = document.querySelectorAll('.user-name-sidebar');
+            sideNames.forEach(el => el.textContent = dbUser.role === 'admin' ? 'Administrator' : (dbUser.name || dbUser.empid));
+            
+            const sideRoles = document.querySelectorAll('.user-role-sidebar');
+            sideRoles.forEach(el => el.textContent = dbUser.role.toUpperCase());
+            
+            const dispNames = document.querySelectorAll('.user-display-name');
+            dispNames.forEach(el => el.textContent = dbUser.role === 'admin' ? 'Administrator' : (dbUser.name || dbUser.empid));
+            
+            const dispIds = document.querySelectorAll('.user-display-id');
+            dispIds.forEach(el => el.textContent = dbUser.role === 'admin' ? dbUser.email : dbUser.empid);
+            
+            // Bypass login page and show the correct dashboard
+            const loginPage = document.getElementById('login-page');
+            const targetDashboardId = dbUser.role === 'admin' ? 'admin-dashboard' : 'employee-dashboard';
+            const targetDashboard = document.getElementById(targetDashboardId);
+            
+            if (loginPage && targetDashboard) {
+                loginPage.classList.remove('active');
+                loginPage.style.opacity = '0';
+                targetDashboard.classList.add('active');
+                targetDashboard.style.opacity = '1';
+                targetDashboard.style.transform = 'translateY(0)';
+            }
+            
+            // Restore last visited tab
+            const lastTab = getLastTab();
+            if (dbUser.role === 'admin') {
+                const defaultTab = lastTab || 'dashboard';
+                switchAdminTab(defaultTab);
+            } else {
+                const defaultTab = lastTab || 'new-entry';
+                switchDashboardTab(defaultTab);
+            }
+            
+            showToast(`Session restored for ${dbUser.name || dbUser.role}.`);
+        } else {
+            // Invalid session or deactivated user
+            clearSession();
+        }
+    }
+
     // Set default date input to today
     const dateInput = document.getElementById('entry-date');
     if (dateInput) {

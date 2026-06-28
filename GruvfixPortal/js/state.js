@@ -465,3 +465,50 @@ async function dbDeleteTool(name) {
     if (error) throw error;
 }
 
+// ==========================================
+// 6. SESSION & VIEW PERSISTENCE HELPERS
+// ==========================================
+function saveSession(user) {
+    if (!user) return;
+    const sessionData = {
+        email: user.email,
+        empid: user.empid,
+        name: user.name,
+        role: user.role,
+        loginTime: Date.now()
+    };
+    localStorage.setItem('gruvfix_session', JSON.stringify(sessionData));
+}
+
+function getSession() {
+    const sessionStr = localStorage.getItem('gruvfix_session');
+    if (!sessionStr) return null;
+    try {
+        const session = JSON.parse(sessionStr);
+        // Session expiry: 8 hours (8 * 60 * 60 * 1000 ms)
+        const expiryLimit = 8 * 60 * 60 * 1000;
+        if (Date.now() - session.loginTime > expiryLimit) {
+            clearSession();
+            return null;
+        }
+        return session;
+    } catch (e) {
+        clearSession();
+        return null;
+    }
+}
+
+function clearSession() {
+    localStorage.removeItem('gruvfix_session');
+    localStorage.removeItem('gruvfix_last_tab');
+}
+
+function saveLastTab(tabId) {
+    localStorage.setItem('gruvfix_last_tab', tabId);
+}
+
+function getLastTab() {
+    return localStorage.getItem('gruvfix_last_tab');
+}
+
+

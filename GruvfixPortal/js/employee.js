@@ -24,6 +24,8 @@ function switchDashboardTab(tabId) {
     const targetView = document.getElementById(`view-${tabId}`);
     if (targetView) targetView.classList.add('active');
     
+    saveLastTab(tabId);
+    
     if (tabId === 'new-entry') {
         updateEmployeeStats();
     } else if (tabId === 'my-history') {

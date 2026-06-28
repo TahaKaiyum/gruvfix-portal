@@ -21,6 +21,8 @@ function switchAdminTab(tabId) {
     const targetMenu = document.getElementById(`admin-menu-${tabId}`);
     if (targetMenu) targetMenu.classList.add('active');
     
+    saveLastTab(tabId);
+    
     const headerTitle = document.getElementById('admin-header-title');
     if (headerTitle) {
         const titles = {
