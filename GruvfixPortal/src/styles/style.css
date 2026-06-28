@@ -2445,3 +2445,33 @@ input:checked + .slider-toggle:before {
     text-align: center;
 }
 
+/* SHIMMER LOADING SKELETONS OVERLAY */
+.loading-shimmer-state {
+    position: relative;
+    pointer-events: none;
+}
+
+.loading-shimmer-state::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, rgba(243, 244, 246, 0.2) 25%, rgba(229, 230, 235, 0.4) 50%, rgba(243, 244, 246, 0.2) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    z-index: 9999;
+    border-radius: 8px;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+

@@ -5,7 +5,7 @@
  */
 
 // Import dependent ES modules to consolidate into a single entrypoint bundle
-import './store/appStore.js';
+import { appStore } from './store/appStore.js';
 import './services/supabase.js';
 import './state.js';
 import './dropdown.js';
@@ -21,6 +21,39 @@ import { HashRouter } from './routing/router.js';
 window.addEventListener('DOMContentLoaded', async () => {
     // Sync state from Supabase on start
     await syncFromSupabase();
+
+    // Subscribe dashboard views to appStore changes to redraw automatically and reactively
+    appStore.subscribe((state) => {
+        if (!state.isLoggedIn) return;
+        
+        if (state.currentRole === 'admin') {
+            const activeTab = state.currentTab;
+            if (activeTab === 'dashboard') {
+                if (typeof window.updateAdminDashboard === 'function') window.updateAdminDashboard();
+            } else if (activeTab === 'entries') {
+                if (typeof window.renderAdminEntriesTable === 'function') window.renderAdminEntriesTable();
+            } else if (activeTab === 'employees') {
+                if (typeof window.renderUsersTable === 'function') window.renderUsersTable();
+            } else if (activeTab === 'customers') {
+                if (typeof window.renderCustomersTable === 'function') window.renderCustomersTable();
+            } else if (activeTab === 'parts') {
+                if (typeof window.renderPartsTable === 'function') window.renderPartsTable();
+            } else if (activeTab === 'tools') {
+                if (typeof window.renderToolsTable === 'function') window.renderToolsTable();
+            } else if (activeTab === 'tool-requests') {
+                if (typeof window.renderAdminToolRequestsTable === 'function') window.renderAdminToolRequestsTable();
+            }
+        } else if (state.currentRole === 'employee') {
+            const activeTab = state.currentTab;
+            if (activeTab === 'new-entry') {
+                if (typeof window.updateEmployeeStats === 'function') window.updateEmployeeStats();
+            } else if (activeTab === 'my-history') {
+                if (typeof window.renderHistoryTable === 'function') window.renderHistoryTable();
+            } else if (activeTab === 'tool-requests') {
+                if (typeof window.renderEmployeeToolRequests === 'function') window.renderEmployeeToolRequests();
+            }
+        }
+    });
 
     // Initialize Hash Router which handles session validation and view restoration automatically
     HashRouter.init();

@@ -182,12 +182,26 @@ function openLogDetailsModal(id) {
 // ==========================================
 // 7. SUPABASE DATABASE SYNC & CRUD OPERATIONS
 // ==========================================
+function toggleLoadingSkeletons(show) {
+    const panels = ['admin-dashboard', 'employee-dashboard'];
+    panels.forEach(pid => {
+        const panel = document.getElementById(pid);
+        if (!panel) return;
+        if (show) {
+            panel.classList.add('loading-shimmer-state');
+        } else {
+            panel.classList.remove('loading-shimmer-state');
+        }
+    });
+}
+
 async function syncFromSupabase() {
     if (typeof supabaseClient === 'undefined' || !supabaseClient) {
         console.warn("Supabase client not initialized, using local mock data.");
         return;
     }
     
+    toggleLoadingSkeletons(true);
     try {
         // 1. Fetch Users
         const { data: dbUsers, error: usersErr } = await supabaseClient
@@ -283,9 +297,11 @@ async function syncFromSupabase() {
         }));
         
         console.log("State synced from Supabase successfully!");
+        toggleLoadingSkeletons(false);
     } catch (err) {
         console.error("Error syncing from Supabase:", err);
         showToast("Database sync error. Using offline state.", "error");
+        toggleLoadingSkeletons(false);
     }
 }
 
