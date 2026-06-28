@@ -297,7 +297,7 @@ body {
 .image-side {
     width: 50%;
     position: relative;
-    background-image: url('factory_bg.png');
+    background-image: url('/factory_bg.png');
     background-size: cover;
     background-position: center;
     display: flex;
