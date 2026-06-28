@@ -9,10 +9,10 @@ var supabaseClient = window.supabaseClient;
 // ==========================================
 // 1. APPLICATION STATE
 // ==========================================
-let currentRole = 'admin'; // 'admin' or 'employee'
-let isLoggedIn = false;
-let loggedInUser = null;
-let currentTab = 'new-entry'; // employee tab: 'new-entry' or 'my-history'
+var currentRole = 'admin'; // 'admin' or 'employee'
+var isLoggedIn = false;
+var loggedInUser = null;
+var currentTab = 'new-entry'; // employee tab: 'new-entry' or 'my-history'
 
 // Shift & operator stats
 let todayEntriesCount = 0;
@@ -48,14 +48,14 @@ function getRelativeDateString(offsetDays) {
 // ==========================================
 // 3. MASTER DATA STORES
 // ==========================================
-let users = [];
-let customers = [];
-let parts = [];
-let tools = [];
-let toolRequests = [];
-let historicalEntries = [];
+var users = [];
+var customers = [];
+var parts = [];
+var tools = [];
+var toolRequests = [];
+var historicalEntries = [];
 
-let todayEntries = [];
+var todayEntries = [];
 
 // ==========================================
 // 4. CASCADING UPDATES LOGIC
