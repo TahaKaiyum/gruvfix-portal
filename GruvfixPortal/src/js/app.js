@@ -5,7 +5,8 @@
  */
 
 // Import dependent ES modules to consolidate into a single entrypoint bundle
-import './supabase.js';
+import './store/appStore.js';
+import './services/supabase.js';
 import './state.js';
 import './dropdown.js';
 import './auth/authController.js';

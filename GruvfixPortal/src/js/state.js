@@ -7,25 +7,6 @@
 var supabaseClient = window.supabaseClient;
 
 // ==========================================
-// 1. APPLICATION STATE
-// ==========================================
-var currentRole = 'admin'; // 'admin' or 'employee'
-var isLoggedIn = false;
-var loggedInUser = null;
-var currentTab = 'new-entry'; // employee tab: 'new-entry' or 'my-history'
-
-// Shift & operator stats
-let todayEntriesCount = 0;
-let todayQtySum = 0;
-let shiftPartsCount = 284; // Simulated live monitor starting count
-
-// Form and search dropdown tracking
-let rowIdCounter = 0;
-let partRows = [];
-let activeRowIdForCustomerDropdown = null;
-let activeRowIdForPartDropdown = null;
-
-// ==========================================
 // 2. DATE GENERATION HELPERS
 // ==========================================
 function getTodayDateString() {
@@ -44,18 +25,6 @@ function getRelativeDateString(offsetDays) {
     const dd = String(d.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
 }
-
-// ==========================================
-// 3. MASTER DATA STORES
-// ==========================================
-var users = [];
-var customers = [];
-var parts = [];
-var tools = [];
-var toolRequests = [];
-var historicalEntries = [];
-
-var todayEntries = [];
 
 // ==========================================
 // 4. CASCADING UPDATES LOGIC
@@ -467,35 +436,11 @@ async function dbDeleteTool(name) {
 
 // Export functions for module imports
 export {
-    currentRole, isLoggedIn, loggedInUser, currentTab,
-    todayEntriesCount, todayQtySum, shiftPartsCount,
-    rowIdCounter, partRows, activeRowIdForCustomerDropdown, activeRowIdForPartDropdown,
-    users, customers, parts, tools, toolRequests, historicalEntries, todayEntries,
     getTodayDateString, getRelativeDateString, cascadeCustomerUpdate, cascadePartUpdate, cascadeEmployeeUpdate,
     showToast, openModal, closeModal, openLogDetailsModal, syncFromSupabase,
     dbSaveUser, dbDeleteUser, dbSaveCustomer, dbDeleteCustomer, dbSavePart, dbDeletePart,
     dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbSaveTool, dbDeleteTool
 };
-
-// Bind getters and setters to window to maintain 100% sync with legacy non-module scripts
-Object.defineProperty(window, 'currentRole', { get: () => currentRole, set: (v) => { currentRole = v; }, configurable: true });
-Object.defineProperty(window, 'isLoggedIn', { get: () => isLoggedIn, set: (v) => { isLoggedIn = v; }, configurable: true });
-Object.defineProperty(window, 'loggedInUser', { get: () => loggedInUser, set: (v) => { loggedInUser = v; }, configurable: true });
-Object.defineProperty(window, 'currentTab', { get: () => currentTab, set: (v) => { currentTab = v; }, configurable: true });
-Object.defineProperty(window, 'todayEntriesCount', { get: () => todayEntriesCount, set: (v) => { todayEntriesCount = v; }, configurable: true });
-Object.defineProperty(window, 'todayQtySum', { get: () => todayQtySum, set: (v) => { todayQtySum = v; }, configurable: true });
-Object.defineProperty(window, 'shiftPartsCount', { get: () => shiftPartsCount, set: (v) => { shiftPartsCount = v; }, configurable: true });
-Object.defineProperty(window, 'rowIdCounter', { get: () => rowIdCounter, set: (v) => { rowIdCounter = v; }, configurable: true });
-Object.defineProperty(window, 'partRows', { get: () => partRows, set: (v) => { partRows = v; }, configurable: true });
-Object.defineProperty(window, 'activeRowIdForCustomerDropdown', { get: () => activeRowIdForCustomerDropdown, set: (v) => { activeRowIdForCustomerDropdown = v; }, configurable: true });
-Object.defineProperty(window, 'activeRowIdForPartDropdown', { get: () => activeRowIdForPartDropdown, set: (v) => { activeRowIdForPartDropdown = v; }, configurable: true });
-Object.defineProperty(window, 'users', { get: () => users, set: (v) => { users = v; }, configurable: true });
-Object.defineProperty(window, 'customers', { get: () => customers, set: (v) => { customers = v; }, configurable: true });
-Object.defineProperty(window, 'parts', { get: () => parts, set: (v) => { parts = v; }, configurable: true });
-Object.defineProperty(window, 'tools', { get: () => tools, set: (v) => { tools = v; }, configurable: true });
-Object.defineProperty(window, 'toolRequests', { get: () => toolRequests, set: (v) => { toolRequests = v; }, configurable: true });
-Object.defineProperty(window, 'historicalEntries', { get: () => historicalEntries, set: (v) => { historicalEntries = v; }, configurable: true });
-Object.defineProperty(window, 'todayEntries', { get: () => todayEntries, set: (v) => { todayEntries = v; }, configurable: true });
 
 // Bind all state functions to window
 window.getTodayDateString = getTodayDateString;
@@ -519,6 +464,7 @@ window.dbSaveLog = dbSaveLog;
 window.dbDeleteLog = dbDeleteLog;
 window.dbSaveTool = dbSaveTool;
 window.dbDeleteTool = dbDeleteTool;
+
 
 
 
