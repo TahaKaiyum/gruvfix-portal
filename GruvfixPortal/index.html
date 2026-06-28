@@ -897,21 +897,34 @@
                             <span class="subtitle-logging">USER MANAGEMENT</span>
                             <h3>Employees & Admins</h3>
                         </div>
-                        <button type="button" class="btn-add-user-header" onclick="openAddUserModal()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                <line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            Add user
-                        </button>
+                        <div class="header-action-row-horizontal">
+                            <select id="admin-filter-user-role" onchange="renderUsersTable()" class="table-search-input" style="max-width: 140px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: #ffffff;">
+                                <option value="all">All Roles</option>
+                                <option value="employee">Employee</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <select id="admin-filter-user-status" onchange="renderUsersTable()" class="table-search-input" style="max-width: 140px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: #ffffff;">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            <input type="text" id="admin-search-users" class="table-search-input" placeholder="Search employees..." oninput="renderUsersTable()">
+                            <button type="button" class="btn-add-user-header" onclick="openAddUserModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add user
+                            </button>
+                        </div>
                     </div>
 
                     <div class="card table-card">
                         <table class="data-table" id="admin-users-table">
                             <thead>
                                 <tr>
-                                    <th>Employee ID</th>
-                                    <th>Email</th>
+                                    <th onclick="toggleUserSort('empid')" style="cursor: pointer; user-select: none;">Employee ID <span id="sort-icon-user-empid" style="margin-left: 4px; font-size: 11px; color: var(--text-light);">↕</span></th>
+                                    <th onclick="toggleUserSort('email')" style="cursor: pointer; user-select: none;">Email <span id="sort-icon-user-email" style="margin-left: 4px; font-size: 11px; color: var(--text-light);">↕</span></th>
                                     <th>Role</th>
                                     <th>Active</th>
                                     <th style="text-align: right;">Actions</th>
@@ -921,6 +934,13 @@
                                 <!-- Dynamic user rows -->
                             </tbody>
                         </table>
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-top: 1px solid var(--border-color);">
+                            <span id="admin-users-pagination-info" style="font-size: 13px; color: var(--text-medium);">Showing 0-0 of 0</span>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" id="admin-users-prev-page" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-color); border-radius: 4px; background: #ffffff;" onclick="changeUserPage(-1)">Previous</button>
+                                <button type="button" id="admin-users-next-page" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-color); border-radius: 4px; background: #ffffff;" onclick="changeUserPage(1)">Next</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

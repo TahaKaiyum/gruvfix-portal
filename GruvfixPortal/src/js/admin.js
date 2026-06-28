@@ -463,20 +463,127 @@ async function updateEntryStatus(id, newStatus) {
 // 4. MASTER DATA: USER MANAGEMENT CRUD
 // ==========================================
 
+let userCurrentPage = 1;
+const userPageSize = 5;
+let userSortField = 'empid';
+let userSortDirection = 'asc';
+
+function toggleUserSort(field) {
+    if (userSortField === field) {
+        userSortDirection = userSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        userSortField = field;
+        userSortDirection = 'asc';
+    }
+    
+    // Reset sort indicators
+    const icons = { 'empid': 'sort-icon-user-empid', 'email': 'sort-icon-user-email' };
+    Object.keys(icons).forEach(f => {
+        const el = document.getElementById(icons[f]);
+        if (el) {
+            if (f === userSortField) {
+                el.textContent = userSortDirection === 'asc' ? '▲' : '▼';
+                el.style.color = 'var(--primary-color)';
+            } else {
+                el.textContent = '↕';
+                el.style.color = 'var(--text-light)';
+            }
+        }
+    });
+    
+    renderUsersTable();
+}
+
+function changeUserPage(dir) {
+    userCurrentPage += dir;
+    renderUsersTable();
+}
+
 function renderUsersTable() {
     const tbody = document.getElementById('admin-users-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    users.forEach((user, i) => {
+    const query = document.getElementById('admin-search-users').value.toLowerCase().trim();
+    const roleFilter = document.getElementById('admin-filter-user-role').value;
+    const statusFilter = document.getElementById('admin-filter-user-status').value;
+    
+    // 1. Filter
+    let filtered = users.filter(u => {
+        const nameVal = u.name || '';
+        const empidVal = u.empid || '';
+        const emailVal = u.email || '';
+        const matchesQuery = nameVal.toLowerCase().includes(query) || 
+                             empidVal.toLowerCase().includes(query) || 
+                             emailVal.toLowerCase().includes(query);
+                             
+        let matchesRole = true;
+        if (roleFilter !== 'all') {
+            matchesRole = u.role === roleFilter;
+        }
+        
+        let matchesStatus = true;
+        if (statusFilter === 'active') {
+            matchesStatus = u.active === true;
+        } else if (statusFilter === 'inactive') {
+            matchesStatus = u.active === false;
+        }
+        
+        return matchesQuery && matchesRole && matchesStatus;
+    });
+    
+    // 2. Sort
+    filtered.sort((a, b) => {
+        let valA = (a[userSortField] || '').toString().toLowerCase();
+        let valB = (b[userSortField] || '').toString().toLowerCase();
+        
+        if (valA < valB) return userSortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return userSortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    // 3. Paginate
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / userPageSize));
+    
+    if (userCurrentPage > totalPages) {
+        userCurrentPage = totalPages;
+    }
+    if (userCurrentPage < 1) {
+        userCurrentPage = 1;
+    }
+    
+    const startIndex = (userCurrentPage - 1) * userPageSize;
+    const endIndex = Math.min(startIndex + userPageSize, totalItems);
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+    
+    // Update pagination controls info
+    const infoEl = document.getElementById('admin-users-pagination-info');
+    if (infoEl) {
+        infoEl.textContent = totalItems === 0 ? 'Showing 0-0 of 0' : `Showing ${startIndex + 1}-${endIndex} of ${totalItems}`;
+    }
+    
+    const prevBtn = document.getElementById('admin-users-prev-page');
+    if (prevBtn) prevBtn.disabled = userCurrentPage === 1;
+    
+    const nextBtn = document.getElementById('admin-users-next-page');
+    if (nextBtn) nextBtn.disabled = userCurrentPage === totalPages;
+    
+    if (paginatedItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-table-state">No users found.</td></tr>`;
+        return;
+    }
+    
+    paginatedItems.forEach((user) => {
+        const mainIndex = users.findIndex(u => u.email === user.email);
         const tr = document.createElement('tr');
         
         const statusBadge = user.active 
-            ? `<span class="status-badge completed" style="cursor: pointer;" onclick="toggleUserActiveStatus(${i})">Active</span>` 
-            : `<span class="status-badge rework" style="cursor: pointer;" onclick="toggleUserActiveStatus(${i})">Inactive</span>`;
+            ? `<span class="status-badge completed" style="cursor: pointer; user-select: none;" onclick="toggleUserActiveStatus(${mainIndex})">Active</span>` 
+            : `<span class="status-badge rework" style="cursor: pointer; user-select: none;" onclick="toggleUserActiveStatus(${mainIndex})">Inactive</span>`;
             
         const editIcon = `
-            <button type="button" class="btn-edit-entry" onclick="openEditUserModal(${i})" title="Edit user" style="background: none; border: none; padding: 6px; cursor: pointer; color: #4b5563; transition: color 0.15s;">
+            <button type="button" class="btn-edit-entry" onclick="openEditUserModal(${mainIndex})" title="Edit user" style="background: none; border: none; padding: 6px; cursor: pointer; color: #4b5563; transition: color 0.15s;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -484,7 +591,7 @@ function renderUsersTable() {
             </button>
         `;
         const deleteIcon = `
-            <button type="button" class="btn-delete-entry" onclick="deleteUser(${i})" title="Delete user" style="background: none; border: none; padding: 6px; cursor: pointer; color: #b91c1c; transition: color 0.15s;">
+            <button type="button" class="btn-delete-entry" onclick="deleteUser(${mainIndex})" title="Delete user" style="background: none; border: none; padding: 6px; cursor: pointer; color: #b91c1c; transition: color 0.15s;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                     <polyline points="3 6 5 6 21 6"/>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -558,128 +665,150 @@ async function saveUserModal(e) {
     const password = document.getElementById('modal-user-password').value;
     const active = document.getElementById('modal-user-active').value === 'true';
     
+    // Validation
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast("A valid email address is required.", "error");
+        return;
+    }
+    if (index === -1 && (!password || password.length < 6)) {
+        showToast("Password must be at least 6 characters.", "error");
+        return;
+    }
+    if (role === 'employee') {
+        if (!empid || !/^(EMP)[0-9]{3,}$/.test(empid)) {
+            showToast("Employee ID must start with 'EMP' followed by at least 3 digits.", "error");
+            return;
+        }
+    }
+    
     const newUserObj = {
         empid: role === 'admin' ? '' : empid,
         name: email.split('@')[0],
         email,
-        password,
+        password: password || (index !== -1 ? users[index].password : ''),
         role,
         active
     };
     
+    // Backup state for Optimistic UI Rollback
+    const backupUsers = JSON.parse(JSON.stringify(users));
+    
+    // Apply local state updates optimistically
     if (index === -1) {
-        if (!password) {
-            showToast('Password is required for new users.', 'error');
-            return;
-        }
-        if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
-            try {
-                await dbSaveUser(newUserObj);
-                await syncFromSupabase();
-            } catch (err) {
-                console.error("Error creating user:", err);
-                showToast("Failed to create user in database.", "error");
-                return;
-            }
-        } else {
-            users.push(newUserObj);
-        }
+        users.push(newUserObj);
         showToast('User created successfully.');
     } else {
-        const user = users[index];
-        const oldEmpId = user.empid;
-        
-        const updatedUserObj = {
-            empid: role === 'admin' ? '' : empid,
-            name: email.split('@')[0],
-            email,
-            password: password || user.password,
-            role,
-            active
-        };
-        
-        if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
-            try {
-                if (oldEmpId !== updatedUserObj.empid) {
-                    await dbDeleteUser(oldEmpId);
-                }
-                await dbSaveUser(updatedUserObj);
-                await syncFromSupabase();
-            } catch (err) {
-                console.error("Error updating user:", err);
-                showToast("Failed to update user in database.", "error");
-                return;
-            }
-        } else {
-            user.role = role;
-            user.empid = role === 'admin' ? '' : empid;
-            user.email = email;
-            user.active = active;
-            if (password) user.password = password;
-            
-            if (role === 'employee') {
-                cascadeEmployeeUpdate(oldEmpId, empid);
-            }
+        const oldEmpId = users[index].empid;
+        users[index] = newUserObj;
+        if (role === 'employee') {
+            cascadeEmployeeUpdate(oldEmpId, empid);
         }
         showToast('User updated successfully.');
     }
     
+    // Render immediately
     closeModal('modal-user');
     renderUsersTable();
     populateFilterDropdowns();
     updateAdminDashboard();
+    
+    // Perform background DB sync
+    if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
+        try {
+            if (index !== -1) {
+                const oldEmpId = backupUsers[index].empid;
+                if (oldEmpId !== newUserObj.empid) {
+                    await dbDeleteUser(oldEmpId);
+                }
+            }
+            await dbSaveUser(newUserObj);
+            await syncFromSupabase();
+        } catch (err) {
+            console.error("Error saving user:", err);
+            // Rollback local state
+            users = backupUsers;
+            renderUsersTable();
+            populateFilterDropdowns();
+            updateAdminDashboard();
+            showToast("Failed to save changes. Rolled back.", "error");
+        }
+    }
 }
 
 async function toggleUserActiveStatus(index) {
     const user = users[index];
-    if (user.email === 'admin@gruvfix.com') {
-        showToast('Cannot deactivate the main administrator.', 'error');
+    const session = window.loggedInUser;
+    
+    if (user.email === 'admin@gruvfix.com' || (session && user.email === session.email)) {
+        showToast('Cannot deactivate the active administrator.', 'error');
         return;
     }
+    
     const updatedUser = {
         ...user,
         active: !user.active
     };
+    
+    // Backup state for Optimistic UI Rollback
+    const backupUsers = JSON.parse(JSON.stringify(users));
+    
+    // Apply local state updates optimistically
+    users[index].active = !users[index].active;
+    renderUsersTable();
+    updateAdminDashboard();
+    showToast(`User status toggled.`);
+    
+    // Perform background DB sync
     if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
         try {
             await dbSaveUser(updatedUser);
             await syncFromSupabase();
         } catch (err) {
-            console.error("Error toggling user status:", err);
-            showToast("Failed to toggle user status in database.", "error");
-            return;
+            console.error("Error toggling status:", err);
+            // Rollback local state
+            users = backupUsers;
+            renderUsersTable();
+            updateAdminDashboard();
+            showToast("Failed to update status. Rolled back.", "error");
         }
-    } else {
-        user.active = !user.active;
     }
-    renderUsersTable();
-    updateAdminDashboard();
-    showToast(`User ${user.empid || user.email} active status toggled.`);
 }
 
 async function deleteUser(index) {
     const user = users[index];
-    if (user.email === 'admin@gruvfix.com') {
-        showToast('Cannot delete the main administrator.', 'error');
+    const session = window.loggedInUser;
+    
+    if (user.email === 'admin@gruvfix.com' || (session && user.email === session.email)) {
+        showToast('Cannot delete the active administrator.', 'error');
         return;
     }
+    
     if (confirm(`Are you sure you want to delete user ${user.empid || user.email}?`)) {
+        // Backup state for Optimistic UI Rollback
+        const backupUsers = JSON.parse(JSON.stringify(users));
+        
+        // Apply local state updates optimistically
+        users.splice(index, 1);
+        renderUsersTable();
+        populateFilterDropdowns();
+        updateAdminDashboard();
+        showToast(`User deleted successfully.`);
+        
+        // Perform background DB sync
         if (typeof dbDeleteUser !== 'undefined' && supabaseClient) {
             try {
                 await dbDeleteUser(user.empid);
                 await syncFromSupabase();
             } catch (err) {
                 console.error("Error deleting user:", err);
-                showToast("Failed to delete user from database.", "error");
-                return;
+                // Rollback local state
+                users = backupUsers;
+                renderUsersTable();
+                populateFilterDropdowns();
+                updateAdminDashboard();
+                showToast("Failed to delete user. Rolled back.", "error");
             }
-        } else {
-            users.splice(index, 1);
         }
-        renderUsersTable();
-        populateFilterDropdowns();
-        updateAdminDashboard();
-        showToast('User deleted successfully.');
     }
 }
 
@@ -1393,6 +1522,7 @@ export {
     getFilteredAdminEntries, renderAdminEntriesTable, filterAdminEntries, resetAdminFilters,
     deleteAdminEntry, updateEntryStatus, renderUsersTable, openAddUserModal,
     openEditUserModal, toggleUserModalFields, saveUserModal, toggleUserActiveStatus, deleteUser,
+    toggleUserSort, changeUserPage,
     renderCustomersTable, openAddCustomerModal, openEditCustomerModal, saveCustomerModal, deleteCustomer,
     toggleCustomerSort, changeCustomerPage,
     renderPartsTable, openAddPartModal, openEditPartModal, savePartModal, deletePart,
@@ -1418,6 +1548,8 @@ window.toggleUserModalFields = toggleUserModalFields;
 window.saveUserModal = saveUserModal;
 window.toggleUserActiveStatus = toggleUserActiveStatus;
 window.deleteUser = deleteUser;
+window.toggleUserSort = toggleUserSort;
+window.changeUserPage = changeUserPage;
 window.renderCustomersTable = renderCustomersTable;
 window.openAddCustomerModal = openAddCustomerModal;
 window.openEditCustomerModal = openEditCustomerModal;
