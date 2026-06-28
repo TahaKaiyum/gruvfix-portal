@@ -9,6 +9,13 @@
 // ==========================================
 
 function switchAdminTab(tabId) {
+    if (window.location.hash !== `#/admin/${tabId}`) {
+        window.location.hash = `#/admin/${tabId}`;
+        return;
+    }
+    
+    window.currentTab = tabId; // Sync state variable
+    
     const tabViews = document.querySelectorAll('#admin-dashboard .tab-view');
     tabViews.forEach(view => view.classList.remove('active'));
     

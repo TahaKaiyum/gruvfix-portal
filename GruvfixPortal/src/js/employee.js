@@ -9,6 +9,11 @@
 // ==========================================
 
 function switchDashboardTab(tabId) {
+    if (window.location.hash !== `#/operator/${tabId}`) {
+        window.location.hash = `#/operator/${tabId}`;
+        return;
+    }
+    
     currentTab = tabId;
     
     // Remove active class from all sidebar menu items and tab views in employee panel

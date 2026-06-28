@@ -101,12 +101,10 @@ export function handleLogin(e) {
     SidebarRenderer.renderUserProfile(user);
     
     if (window.currentRole === 'admin') {
-        transitionPages('login-page', 'admin-dashboard');
-        window.switchAdminTab('dashboard'); // Default to dashboard on admin login
+        window.location.hash = '#/admin/dashboard';
         window.showToast('Logged in successfully as Administrator.');
     } else {
-        transitionPages('login-page', 'employee-dashboard');
-        window.switchDashboardTab('new-entry'); // Default to new entry on employee login
+        window.location.hash = '#/operator/new-entry';
         
         // Refresh local counters and history tables
         window.updateEmployeeStats();
@@ -126,8 +124,7 @@ export function logout() {
     window.loggedInUser = null;
     SessionManager.clearSession();
     
-    const activeDashboard = window.currentRole === 'admin' ? 'admin-dashboard' : 'employee-dashboard';
-    transitionPages(activeDashboard, 'login-page');
+    window.location.hash = '#/login';
     
     const pwdInput = document.getElementById('login-password');
     if (pwdInput) pwdInput.value = '';
