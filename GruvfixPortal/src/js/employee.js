@@ -41,6 +41,7 @@ function switchDashboardTab(tabId) {
 }
 
 function updateEmployeeStats() {
+    const loggedInUser = window.loggedInUser || (typeof window.getSession === 'function' ? window.getSession() : null);
     if (!loggedInUser) return;
     const todayStr = getTodayDateString();
     
@@ -282,6 +283,11 @@ function resetForm() {
 
 async function saveWorkEntries(e) {
     e.preventDefault();
+    const loggedInUser = window.loggedInUser || (typeof window.getSession === 'function' ? window.getSession() : null);
+    if (!loggedInUser) {
+        showToast('Session expired. Please log in again.', 'error');
+        return;
+    }
     
     const date = document.getElementById('entry-date').value;
     const shift = document.getElementById('entry-shift').value;
@@ -382,6 +388,7 @@ async function saveWorkEntries(e) {
 }
 
 function renderTodayEntriesTable() {
+    const loggedInUser = window.loggedInUser || (typeof window.getSession === 'function' ? window.getSession() : null);
     const tbody = document.getElementById('today-entries-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -463,6 +470,7 @@ async function deleteTodayEntry(entryId) {
 // ==========================================
 
 function renderHistoryTable() {
+    const loggedInUser = window.loggedInUser || (typeof window.getSession === 'function' ? window.getSession() : null);
     const tbody = document.getElementById('history-entries-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';

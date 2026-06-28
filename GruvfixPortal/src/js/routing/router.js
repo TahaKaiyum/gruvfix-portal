@@ -49,6 +49,10 @@ export const HashRouter = {
             return;
         }
 
+        // Restore global session state to ensure compatibility across all modules
+        window.loggedInUser = session;
+        window.isLoggedIn = true;
+
         // 3. Permission verification
         const hasAccess = routeGuards.canAccess(hash, session.role);
         if (!hasAccess) {
