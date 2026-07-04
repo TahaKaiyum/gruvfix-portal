@@ -16,104 +16,285 @@
 
     <!-- MAIN LOGIN CONTAINER (Split-Screen) -->
     <div id="login-page" class="page active">
-        <div class="homepage-container">
-            <div class="homepage-card">
-                <!-- Brand Logo -->
-                <div class="logo-box">
-                    <img src="Logo.png" alt="Gruvfix Logo" class="brand-logo-img">
-                </div>
+        <div class="split-container">
+            <!-- Left Side: Login Form -->
+            <div class="login-side">
+                <div class="login-left-wrapper">
+                    <!-- Brand Logo -->
+                    <div class="logo-box">
+                        <img src="Logo.png" alt="Gruvfix Logo" class="brand-logo-img">
+                    </div>
 
-                <!-- Title & Subtitle -->
-                <div class="login-header">
-                    <h1>Gruvfix Manufacturing Portal</h1>
-                    <p class="subtitle">Production Operations Platform</p>
-                </div>
+                    <!-- Title & Subtitle -->
+                    <div class="login-header">
+                        <h1>Production Monitor</h1>
+                        <p>Hourly work tracking for Gruvfix Gaskets and Seals LLP. Sign in to access your role-specific console.</p>
+                    </div>
 
-                <!-- Role Selector Tabs -->
-                <div class="role-selector">
-                    <button type="button" id="tab-admin" class="role-tab active" onclick="switchRole('admin')">
-                        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                            <path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Admin
-                    </button>
-                    <button type="button" id="tab-employee" class="role-tab" onclick="switchRole('employee')">
-                        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                        Employee
-                    </button>
-                </div>
+                    <!-- Role Selector Tabs -->
+                    <div class="role-selector">
+                        <button type="button" id="tab-admin" class="role-tab active" onclick="switchRole('admin')">
+                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Admin
+                        </button>
+                        <button type="button" id="tab-employee" class="role-tab" onclick="switchRole('employee')">
+                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            Employee
+                        </button>
+                    </div>
 
-                <!-- Login Form -->
-                <form id="login-form" onsubmit="handleLogin(event)">
-                    <div class="form-instruction" id="form-instruction">LOGIN WITH ADMIN EMAIL</div>
+                    <!-- Login Form -->
+                    <form id="login-form" onsubmit="handleLogin(event)">
+                        <div class="form-instruction" id="form-instruction">LOGIN WITH ADMIN EMAIL</div>
+                        
+                        <div class="form-group" id="input-group-email">
+                            <label for="login-username" id="label-username">EMAIL</label>
+                            <input type="text" id="login-username" placeholder="admin@gruvfix.com" required autocomplete="username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">PASSWORD</label>
+                            <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+
+                        <button type="submit" class="btn-submit">
+                            Sign in
+                        </button>
+                    </form>
+
+                    <!-- Default Credentials Box -->
+                    <div class="credentials-box">
+                        <div class="cred-title">DEFAULT CREDENTIALS</div>
+                        <div class="cred-row">
+                            <span class="cred-label">Admin:</span>
+                            <span class="cred-value" onclick="fillCreds('admin@gruvfix.com', 'Admin123')">admin@gruvfix.com / Admin123</span>
+                        </div>
+                        <div class="cred-row">
+                            <span class="cred-label">Employee:</span>
+                            <span class="cred-value" onclick="fillCreds('EMP001', 'Emp@12345')">EMP001 / Emp@12345</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Dark Green Operations Snapshot -->
+            <div class="image-side">
+                <div class="image-overlay"></div>
+                <div class="image-content live-snapshot-content">
                     
-                    <div class="form-group" id="input-group-email">
-                        <label for="login-username" id="label-username">EMAIL</label>
-                        <input type="text" id="login-username" placeholder="admin@gruvfix.com" required autocomplete="username">
+                    <!-- Header -->
+                    <div class="snapshot-header">
+                        <div>
+                            <div class="live-indicator-wrapper">
+                                <span class="live-dot-green animate-pulse"></span>
+                                <h2>Production Snapshot</h2>
+                            </div>
+                            <p>Real-time overview of today's operations</p>
+                        </div>
+                        <span class="shift-badge-outlined">SHIFT A (08:00 - 20:00)</span>
                     </div>
 
-                    <div class="form-group">
-                        <label for="login-password">PASSWORD</label>
-                        <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                    <!-- Metrics Grid -->
+                    <div class="snapshot-grid">
+                        <!-- Parts Produced Today -->
+                        <div class="snapshot-card">
+                            <div class="card-icon-container">
+                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="20" x2="18" y2="10"/>
+                                    <line x1="12" y1="20" x2="12" y2="4"/>
+                                    <line x1="6" y1="20" x2="6" y2="14"/>
+                                </svg>
+                            </div>
+                            <span class="metric-value-large" id="snap-metric-parts">1,286</span>
+                            <span class="metric-label-sub">Parts Produced</span>
+                            <span class="metric-label-desc">Today</span>
+                        </div>
+
+                        <!-- Active Operators On Floor -->
+                        <div class="snapshot-card">
+                            <div class="card-icon-container">
+                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </div>
+                            <span class="metric-value-large" id="snap-metric-operators">31</span>
+                            <span class="metric-label-sub">Active Operators</span>
+                            <span class="metric-label-desc">On Floor</span>
+                        </div>
+
+                        <!-- Open Tool Requests Pending -->
+                        <div class="snapshot-card">
+                            <div class="card-icon-container">
+                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                                </svg>
+                            </div>
+                            <span class="metric-value-large" id="snap-metric-tool-reqs">8</span>
+                            <span class="metric-label-sub">Open Tool Requests</span>
+                            <span class="metric-label-desc">Pending</span>
+                        </div>
+
+                        <!-- Customers Active -->
+                        <div class="snapshot-card">
+                            <div class="card-icon-container">
+                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <span class="metric-value-large" id="snap-metric-customers">14</span>
+                            <span class="metric-label-sub">Customers</span>
+                            <span class="metric-label-desc">Active</span>
+                        </div>
+
+                        <!-- Machines Running Live -->
+                        <div class="snapshot-card">
+                            <div class="card-icon-container">
+                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                            </div>
+                            <span class="metric-value-large" id="snap-metric-machines">6</span>
+                            <span class="metric-label-sub">Machines Running</span>
+                            <span class="metric-label-desc">Live</span>
+                        </div>
+
+                        <!-- Today's Efficiency -->
+                        <div class="snapshot-card">
+                            <div class="card-icon-container">
+                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <circle cx="12" cy="12" r="6"/>
+                                    <circle cx="12" cy="12" r="2"/>
+                                </svg>
+                            </div>
+                            <span class="metric-value-large" id="snap-metric-efficiency">94.2%</span>
+                            <span class="metric-label-sub">Today's Efficiency</span>
+                            <div class="trend-badge-wrapper">
+                                <span class="trend-badge-pill">
+                                    ↑ 2.1% vs yesterday
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn-submit">
-                        Sign in
-                    </button>
-                </form>
+                    <!-- Bottom Split Section (Schedule & Announcements) -->
+                    <div class="snapshot-bottom-row">
+                        
+                        <!-- Today's Schedule Card -->
+                        <div class="snapshot-sub-card">
+                            <h3 class="sub-card-title">Today's Schedule</h3>
+                            <div class="timeline-container">
+                                <div class="timeline-line"></div>
+                                
+                                <!-- Timeline Item 1 -->
+                                <div class="timeline-item">
+                                    <span class="timeline-dot"></span>
+                                    <div>
+                                        <span class="timeline-time">08:00</span>
+                                        <p class="timeline-text">Shift A Start</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Timeline Item 2 -->
+                                <div class="timeline-item">
+                                    <span class="timeline-dot"></span>
+                                    <div>
+                                        <span class="timeline-time">12:00</span>
+                                        <p class="timeline-text">Lunch Break</p>
+                                    </div>
+                                </div>
 
-                <!-- Default Credentials Box -->
-                <div class="credentials-box">
-                    <div class="cred-title">DEFAULT CREDENTIALS</div>
-                    <div class="cred-row">
-                        <span class="cred-label">Admin:</span>
-                        <span class="cred-value" onclick="fillCreds('admin@gruvfix.com', 'Admin123')">admin@gruvfix.com / Admin123</span>
+                                <!-- Timeline Item 3 -->
+                                <div class="timeline-item">
+                                    <span class="timeline-dot"></span>
+                                    <div>
+                                        <span class="timeline-time">13:00</span>
+                                        <p class="timeline-text">Production Resume</p>
+                                    </div>
+                                </div>
+
+                                <!-- Timeline Item 4 -->
+                                <div class="timeline-item">
+                                    <span class="timeline-dot"></span>
+                                    <div>
+                                        <span class="timeline-time">20:00</span>
+                                        <p class="timeline-text">Shift B Start</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Latest Announcements Card -->
+                        <div class="snapshot-sub-card announcements-sub-card">
+                            <div style="flex-grow: 1;">
+                                <h3 class="sub-card-title">Latest Announcements</h3>
+                                <div class="announcements-list">
+                                    
+                                    <!-- Announcement 1 -->
+                                    <div class="announcement-item">
+                                        <div class="ann-icon-circle">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="ann-icon">
+                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="ann-text">New Tool Request workflow is now live.</p>
+                                            <span class="ann-date">May 26, 2025</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Announcement 2 -->
+                                    <div class="announcement-item">
+                                        <div class="ann-icon-circle">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="ann-icon">
+                                                <circle cx="12" cy="12" r="3"/>
+                                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="ann-text">CNC-03 scheduled maintenance at 6 PM.</p>
+                                            <span class="ann-date">May 26, 2025</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Announcement 3 -->
+                                    <div class="announcement-item">
+                                        <div class="ann-icon-circle">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="ann-icon">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="ann-text">Monthly Safety Meeting on Friday.</p>
+                                            <span class="ann-date">May 25, 2025</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="#" onclick="event.preventDefault(); alert('Redirecting to announcements...');" class="view-ann-link">View all announcements →</a>
+                        </div>
                     </div>
-                    <div class="cred-row">
-                        <span class="cred-label">Employee:</span>
-                        <span class="cred-value" onclick="fillCreds('EMP001', 'Emp@12345')">EMP001 / Emp@12345</span>
-                    </div>
+
+                    <!-- Footer -->
+                    <footer class="snapshot-footer-copyright">
+                        <span>© 2026 Gruvfix Gaskets and Seals LLP. All rights reserved.</span>
+                    </footer>
+
                 </div>
-
-                <!-- Divider Line -->
-                <hr class="homepage-divider">
-
-                <!-- Real-time Production Metrics Section -->
-                <div class="metrics-section">
-                    <h2 class="metrics-title">Real-time Production Metrics</h2>
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-value text-green">94.2%</span>
-                            <span class="metric-label">Today's Efficiency</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-value" id="homepage-metric-parts">0</span>
-                            <span class="metric-label">Parts Produced Today</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-value" id="homepage-metric-operators">0</span>
-                            <span class="metric-label">Active Operators</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-value text-amber" id="homepage-metric-tool-reqs">0</span>
-                            <span class="metric-label">Pending Tool Requests</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Divider Line -->
-                <hr class="homepage-divider">
-
-                <!-- Quote Footer -->
-                <footer class="homepage-footer">
-                    <p>"Manufacturing Excellence Through Digitalization"</p>
-                </footer>
             </div>
         </div>
     </div>

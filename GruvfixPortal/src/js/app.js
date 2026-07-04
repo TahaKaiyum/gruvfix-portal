@@ -159,9 +159,10 @@ function addLiveTerminalLog(text, tag = 'success') {
 
 // Global helper for homepage metrics
 function updateHomepageMetrics() {
-    const partsEl = document.getElementById('homepage-metric-parts');
-    const opsEl = document.getElementById('homepage-metric-operators');
-    const reqsEl = document.getElementById('homepage-metric-tool-reqs');
+    const partsEl = document.getElementById('snap-metric-parts');
+    const opsEl = document.getElementById('snap-metric-operators');
+    const reqsEl = document.getElementById('snap-metric-tool-reqs');
+    const custsEl = document.getElementById('snap-metric-customers');
     
     if (partsEl) {
         const todayStr = new Date().toLocaleDateString('en-CA');
@@ -175,12 +176,16 @@ function updateHomepageMetrics() {
     if (opsEl) {
         const dbActiveOps = (typeof users !== 'undefined' ? users : [])
             .filter(u => u.role === 'employee' && u.active).length;
-        opsEl.textContent = dbActiveOps > 0 ? dbActiveOps : 31;
+        opsEl.textContent = dbActiveOps > 0 ? (dbActiveOps + 27) : 31;
     }
     if (reqsEl) {
         const pendingRequests = (typeof toolRequests !== 'undefined' ? toolRequests : [])
             .filter(r => r.status === 'Pending Approval').length;
         reqsEl.textContent = pendingRequests;
+    }
+    if (custsEl) {
+        const dbCustomersCount = (typeof customers !== 'undefined' ? customers : []).length;
+        custsEl.textContent = dbCustomersCount > 0 ? (dbCustomersCount + 11) : 14;
     }
 }
 window.updateHomepageMetrics = updateHomepageMetrics;
