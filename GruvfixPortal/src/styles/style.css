@@ -2504,22 +2504,17 @@ input:checked + .slider-toggle:before {
 }
 
 .login-side .logo-box {
-    margin-bottom: 40px;
-    background-color: #5bb35f; /* bright green background matching mockup */
-    padding: 12px 24px;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: fit-content;
-    box-shadow: 0 4px 12px rgba(91, 179, 95, 0.15);
+    margin-bottom: 30px;
+    display: block;
 }
 
 .login-side .brand-logo-img {
-    height: 42px;
+    height: 72px; /* scaled up since image contains built-in green margins */
     width: auto;
     object-fit: contain;
     display: block;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .login-side .login-header {
