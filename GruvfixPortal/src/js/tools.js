@@ -162,6 +162,7 @@ async function saveToolModal(e) {
             }
         } else {
             tools.push(newToolObj);
+            tools = [...tools];
         }
         showToast('Tool added successfully.');
     } else if (tools[index]) {
@@ -180,6 +181,7 @@ async function saveToolModal(e) {
             }
         } else {
             tools[index] = newToolObj;
+            tools = [...tools];
         }
         showToast('Tool updated successfully.');
     }
@@ -211,6 +213,7 @@ async function deleteTool(index) {
             }
         } else {
             tools.splice(index, 1);
+            tools = [...tools];
         }
         renderToolsTable();
         showToast(`Tool "${tool.name}" deleted.`);
@@ -386,6 +389,7 @@ async function submitToolRequest(e) {
         }
     } else {
         toolRequests.push(newReq);
+        toolRequests = [...toolRequests];
     }
     showToast('Tool request submitted successfully.');
     
@@ -442,6 +446,7 @@ async function submitReturnTool(e) {
         } else {
             req.status = 'Pending Close';
             req.conditionOnClose = Math.min(100, Math.max(0, condition));
+            toolRequests = [...toolRequests];
         }
         showToast('Return submitted. Tool work is over and pending admin closure.');
     }
@@ -541,10 +546,12 @@ async function processToolRequestApproval(reqId, isApproved) {
             }
         } else {
             req.status = isApproved ? 'Approved' : 'Rejected';
+            toolRequests = [...toolRequests];
             if (isApproved) {
                 const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
                 if (masterTool) {
                     masterTool.qty = Math.max(0, masterTool.qty - 1);
+                    tools = [...tools];
                     showToast(`Request approved. Tool "${masterTool.name}" quantity decreased by 1 in inventory.`);
                 } else {
                     showToast('Request approved successfully.');
@@ -596,12 +603,14 @@ async function approveToolReturn(reqId) {
             }
         } else {
             req.status = 'Closed';
+            toolRequests = [...toolRequests];
             const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
             if (masterTool) {
                 masterTool.qty = masterTool.qty + 1;
                 if (req.conditionOnClose !== null) {
                     masterTool.condition = req.conditionOnClose;
                 }
+                tools = [...tools];
                 showToast(`Request closed. Tool "${masterTool.name}" returned to inventory (Qty +1) and condition updated.`);
             } else {
                 showToast('Request closed successfully.');
