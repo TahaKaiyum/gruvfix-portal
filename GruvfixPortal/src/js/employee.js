@@ -348,8 +348,8 @@ async function saveWorkEntries(e) {
             shift: shift // Preserve selected shift
         };
         
-        if (typeof dbSaveLog !== 'undefined' && supabaseClient) {
-            savePromises.push(dbSaveLog(newEntry));
+        if (typeof window.dbSaveLog !== 'undefined' && window.supabaseClient) {
+            savePromises.push(window.dbSaveLog(newEntry));
         } else {
             todayEntries.push(newEntry);
             historicalEntries.unshift(newEntry); // Prepend to history
@@ -359,10 +359,10 @@ async function saveWorkEntries(e) {
     if (savePromises.length > 0) {
         try {
             await Promise.all(savePromises);
-            await syncFromSupabase();
+            await window.syncFromSupabase();
         } catch (err) {
             console.error("Error saving to database:", err);
-            showToast("Failed to save entries to Supabase database.", "error");
+            window.showToast("Failed to save entries to Supabase database.", "error");
             return;
         }
     }
@@ -381,10 +381,10 @@ async function saveWorkEntries(e) {
     addLiveTerminalLog(`Operator ${loggedInUser.empid} logged ${totalQtyLogged} parts`, 'success');
     
     // Seed todayEntries dynamically
-    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
         todayEntries = historicalEntries.filter(e => {
             if (!e.date) return false;
-            const todayStr = getTodayDateString();
+            const todayStr = window.getTodayDateString();
             return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim() && e.employee === loggedInUser?.empid;
         });
     }
@@ -458,14 +458,14 @@ function renderTodayEntriesTable() {
 
 async function deleteTodayEntry(entryId) {
     if (confirm('Are you sure you want to delete this entry?')) {
-        if (typeof dbDeleteLog !== 'undefined' && supabaseClient) {
+        if (typeof window.dbDeleteLog !== 'undefined' && window.supabaseClient) {
             try {
-                await dbDeleteLog(entryId);
-                await syncFromSupabase();
+                await window.dbDeleteLog(entryId);
+                await window.syncFromSupabase();
                 todayEntries = todayEntries.filter(e => e.id !== entryId);
             } catch (err) {
                 console.error("Error deleting from database:", err);
-                showToast("Failed to delete entry from database.", "error");
+                window.showToast("Failed to delete entry from database.", "error");
                 return;
             }
         } else {
@@ -581,13 +581,13 @@ async function clearAllTodayEntries() {
     const todayStr = getTodayDateString();
     
     if (confirm("Are you sure you want to permanently delete ALL your logged entries for today? This action cannot be undone.")) {
-        if (typeof dbDeleteAllTodayLogs !== 'undefined' && supabaseClient) {
+        if (typeof window.dbDeleteAllTodayLogs !== 'undefined' && window.supabaseClient) {
             try {
-                await dbDeleteAllTodayLogs(loggedInUser.empid, todayStr);
-                await syncFromSupabase();
+                await window.dbDeleteAllTodayLogs(loggedInUser.empid, todayStr);
+                await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error clearing today's entries:", err);
-                showToast("Failed to clear entries from the database.", "error");
+                window.showToast("Failed to clear entries from the database.", "error");
                 return;
             }
         } else {
