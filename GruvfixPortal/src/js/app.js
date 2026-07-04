@@ -68,7 +68,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Seed todayEntries dynamically on page load
-    todayEntries = historicalEntries.filter(e => e.date === getTodayDateString());
+    todayEntries = historicalEntries.filter(e => {
+        if (!e.date) return false;
+        const todayStr = getTodayDateString();
+        return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim();
+    });
     todayEntriesCount = todayEntries.length;
     todayQtySum = todayEntries.reduce((sum, e) => sum + e.qty, 0);
     
