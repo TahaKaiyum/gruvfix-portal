@@ -44,8 +44,10 @@ function updateEmployeeStats() {
     const loggedInUser = window.loggedInUser || (typeof window.getSession === 'function' ? window.getSession() : null);
     if (!loggedInUser) return;
     const todayStr = getTodayDateString();
-    
-    const empTodayEntries = historicalEntries.filter(e => e.date === todayStr && e.employee === loggedInUser.empid);
+    const empTodayEntries = historicalEntries.filter(e => {
+        if (!e.date || !todayStr) return false;
+        return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim() && e.employee === loggedInUser.empid;
+    });
     const count = empTodayEntries.length;
     const qty = empTodayEntries.reduce((sum, e) => sum + e.qty, 0);
     
@@ -326,6 +328,7 @@ async function saveWorkEntries(e) {
         const process = document.getElementById(`proc-select-${row.id}`).value;
         const machine = document.getElementById(`mach-input-${row.id}`).value;
         const status = document.getElementById(`status-select-${row.id}`).value;
+        const qtyVal = parseInt(document.getElementById(`qty-input-${row.id}`).value) || 1;
         
         const newEntry = {
             id: rowId,
@@ -335,7 +338,7 @@ async function saveWorkEntries(e) {
             part: rowPart,
             component: row.component || '—',
             process: process,
-            qty: row.qty,
+            qty: qtyVal,
             machine: machine,
             status: status,
             file: row.fileName || '—',
@@ -364,7 +367,10 @@ async function saveWorkEntries(e) {
     }
     
     // Adjust Shift Stats indicator
-    const totalQtyLogged = partRows.reduce((sum, r) => sum + r.qty, 0);
+    const totalQtyLogged = partRows.reduce((sum, r) => {
+        const inputEl = document.getElementById(`qty-input-${r.id}`);
+        return sum + (inputEl ? parseInt(inputEl.value) || 1 : r.qty);
+    }, 0);
     shiftPartsCount += totalQtyLogged;
     const monitorPartsEl = document.getElementById('monitor-stat-parts');
     if (monitorPartsEl) {
@@ -375,7 +381,11 @@ async function saveWorkEntries(e) {
     
     // Seed todayEntries dynamically
     if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-        todayEntries = historicalEntries.filter(e => e.date === getTodayDateString() && e.employee === loggedInUser?.empid);
+        todayEntries = historicalEntries.filter(e => {
+            if (!e.date) return false;
+            const todayStr = getTodayDateString();
+            return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim() && e.employee === loggedInUser?.empid;
+        });
     }
     
     // Re-render views
@@ -394,7 +404,10 @@ function renderTodayEntriesTable() {
     tbody.innerHTML = '';
     
     const todayStr = getTodayDateString();
-    const todays = historicalEntries.filter(e => e.date === todayStr && e.employee === loggedInUser?.empid);
+    const todays = historicalEntries.filter(e => {
+        if (!e.date || !todayStr) return false;
+        return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim() && e.employee === loggedInUser?.empid;
+    });
     
     if (todays.length === 0) {
         tbody.innerHTML = `
