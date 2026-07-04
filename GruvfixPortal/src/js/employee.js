@@ -145,8 +145,9 @@ function addPartRow() {
         <div class="col-status">
             <select id="status-select-${rowId}" required>
                 <option value="completed" selected>Completed</option>
-                <option value="in-progress">In Progress</option>
                 <option value="pending">Pending</option>
+                <option value="rework">Rework</option>
+                <option value="hold">Hold</option>
             </select>
         </div>
         <div class="col-remarks">
