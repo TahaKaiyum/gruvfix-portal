@@ -571,11 +571,52 @@ function renderHistoryTable() {
     });
 }
 
+async function clearAllTodayEntries() {
+    const loggedInUser = window.loggedInUser || (typeof window.getSession === 'function' ? window.getSession() : null);
+    if (!loggedInUser) {
+        showToast('Session expired. Please log in again.', 'error');
+        return;
+    }
+    
+    const todayStr = getTodayDateString();
+    
+    if (confirm("Are you sure you want to permanently delete ALL your logged entries for today? This action cannot be undone.")) {
+        if (typeof dbDeleteAllTodayLogs !== 'undefined' && supabaseClient) {
+            try {
+                await dbDeleteAllTodayLogs(loggedInUser.empid, todayStr);
+                await syncFromSupabase();
+            } catch (err) {
+                console.error("Error clearing today's entries:", err);
+                showToast("Failed to clear entries from the database.", "error");
+                return;
+            }
+        } else {
+            // Fallback for offline usage
+            historicalEntries = historicalEntries.filter(e => {
+                if (!e.date) return true;
+                return !(e.date.split('T')[0].trim() === todayStr.split('T')[0].trim() && e.employee === loggedInUser.empid);
+            });
+            todayEntries = [];
+        }
+        
+        // Re-seed todayEntries locally
+        todayEntries = historicalEntries.filter(e => {
+            if (!e.date) return false;
+            return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim() && e.employee === loggedInUser.empid;
+        });
+        
+        updateEmployeeStats();
+        renderTodayEntriesTable();
+        renderHistoryTable();
+        showToast("All today's entries cleared successfully.", "success");
+    }
+}
+
 // Export functions for ESM imports
 export {
     switchDashboardTab, updateEmployeeStats, addPartRow, deletePartRow,
     handleQtyChange, triggerAttachment, handleFileSelected,
-    resetForm, saveWorkEntries, renderTodayEntriesTable, deleteTodayEntry, renderHistoryTable
+    resetForm, saveWorkEntries, renderTodayEntriesTable, deleteTodayEntry, clearAllTodayEntries, renderHistoryTable
 };
 
 // Bind functions to window for backward compatibility
@@ -590,6 +631,7 @@ window.resetForm = resetForm;
 window.saveWorkEntries = saveWorkEntries;
 window.renderTodayEntriesTable = renderTodayEntriesTable;
 window.deleteTodayEntry = deleteTodayEntry;
+window.clearAllTodayEntries = clearAllTodayEntries;
 window.renderHistoryTable = renderHistoryTable;
 
 
