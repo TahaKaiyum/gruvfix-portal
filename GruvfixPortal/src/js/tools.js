@@ -186,6 +186,15 @@ async function saveToolModal(e) {
     
     closeModal('modal-tool');
     renderToolsTable();
+    
+    // Update the Request Tool dropdown if we are on the employee screen
+    const toolSelect = document.getElementById('tool-req-name');
+    if (toolSelect) {
+        renderEmployeeToolRequests();
+        if (index === -1) {
+            toolSelect.value = name;
+        }
+    }
 }
 
 async function deleteTool(index) {
@@ -233,6 +242,22 @@ function renderEmployeeToolRequests() {
     const empNameInput = document.getElementById('tool-req-empname');
     if (empNameInput && loggedInUser) {
         empNameInput.value = loggedInUser.name || loggedInUser.empid;
+    }
+
+    // Populate Tool Needed select dropdown
+    const toolSelect = document.getElementById('tool-req-name');
+    if (toolSelect) {
+        const currentVal = toolSelect.value;
+        toolSelect.innerHTML = '<option value="" disabled selected>Select tool</option>';
+        tools.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.name;
+            opt.textContent = `${t.name} (Dia: ${t.toolDia || t.dia}, Qty: ${t.qty})`;
+            toolSelect.appendChild(opt);
+        });
+        if (currentVal && Array.from(toolSelect.options).some(opt => opt.value === currentVal)) {
+            toolSelect.value = currentVal;
+        }
     }
     
     // Populate Customer dropdown
@@ -365,7 +390,10 @@ async function submitToolRequest(e) {
     showToast('Tool request submitted successfully.');
     
     // Clear forms
-    if (toolNameInput) toolNameInput.value = '';
+    if (toolNameInput) {
+        toolNameInput.value = '';
+        toolNameInput.selectedIndex = 0;
+    }
     if (custSelect) custSelect.selectedIndex = 0;
     if (customCustInput) customCustInput.value = '';
     const customGroup = document.getElementById('tool-req-customcust-group');
