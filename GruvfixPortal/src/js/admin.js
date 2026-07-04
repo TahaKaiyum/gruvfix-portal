@@ -411,14 +411,14 @@ function resetAdminFilters() {
 
 async function deleteAdminEntry(id) {
     if (confirm('Are you sure you want to delete this work entry?')) {
-        if (typeof dbDeleteLog !== 'undefined' && supabaseClient) {
+        if (typeof window.dbDeleteLog !== 'undefined' && window.supabaseClient) {
             try {
-                await dbDeleteLog(id);
-                await syncFromSupabase();
+                await window.dbDeleteLog(id);
+                await window.syncFromSupabase();
                 todayEntries = todayEntries.filter(e => e.id !== id);
             } catch (err) {
                 console.error("Error deleting entry:", err);
-                showToast("Failed to delete entry from database.", "error");
+                window.showToast("Failed to delete entry from database.", "error");
                 return;
             }
         } else {
@@ -440,10 +440,10 @@ async function updateEntryStatus(id, newStatus) {
             status: newStatus
         };
         
-        if (typeof dbSaveLog !== 'undefined' && supabaseClient) {
+        if (typeof window.dbSaveLog !== 'undefined' && window.supabaseClient) {
             try {
-                await dbSaveLog(updatedEntry);
-                await syncFromSupabase();
+                await window.dbSaveLog(updatedEntry);
+                await window.syncFromSupabase();
                 const todayEntry = todayEntries.find(e => e.id === id);
                 if (todayEntry) todayEntry.status = newStatus;
             } catch (err) {
@@ -717,16 +717,16 @@ async function saveUserModal(e) {
     updateAdminDashboard();
     
     // Perform background DB sync
-    if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
+    if (typeof window.dbSaveUser !== 'undefined' && window.supabaseClient) {
         try {
             if (index !== -1) {
                 const oldEmpId = backupUsers[index].empid;
                 if (oldEmpId !== newUserObj.empid) {
-                    await dbDeleteUser(oldEmpId);
+                    await window.dbDeleteUser(oldEmpId);
                 }
             }
-            await dbSaveUser(newUserObj);
-            await syncFromSupabase();
+            await window.dbSaveUser(newUserObj);
+            await window.syncFromSupabase();
         } catch (err) {
             console.error("Error saving user:", err);
             // Rollback local state
@@ -734,7 +734,7 @@ async function saveUserModal(e) {
             renderUsersTable();
             populateFilterDropdowns();
             updateAdminDashboard();
-            showToast("Failed to save changes. Rolled back.", "error");
+            window.showToast("Failed to save changes. Rolled back.", "error");
         }
     }
 }
@@ -763,17 +763,17 @@ async function toggleUserActiveStatus(index) {
     showToast(`User status toggled.`);
     
     // Perform background DB sync
-    if (typeof dbSaveUser !== 'undefined' && supabaseClient) {
+    if (typeof window.dbSaveUser !== 'undefined' && window.supabaseClient) {
         try {
-            await dbSaveUser(updatedUser);
-            await syncFromSupabase();
+            await window.dbSaveUser(updatedUser);
+            await window.syncFromSupabase();
         } catch (err) {
             console.error("Error toggling status:", err);
             // Rollback local state
             users = backupUsers;
             renderUsersTable();
             updateAdminDashboard();
-            showToast("Failed to update status. Rolled back.", "error");
+            window.showToast("Failed to update status. Rolled back.", "error");
         }
     }
 }
@@ -796,13 +796,13 @@ async function deleteUser(index) {
         renderUsersTable();
         populateFilterDropdowns();
         updateAdminDashboard();
-        showToast(`User deleted successfully.`);
+        window.showToast(`User deleted successfully.`);
         
         // Perform background DB sync
-        if (typeof dbDeleteUser !== 'undefined' && supabaseClient) {
+        if (typeof window.dbDeleteUser !== 'undefined' && window.supabaseClient) {
             try {
-                await dbDeleteUser(user.empid);
-                await syncFromSupabase();
+                await window.dbDeleteUser(user.empid);
+                await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error deleting user:", err);
                 // Rollback local state
@@ -810,7 +810,7 @@ async function deleteUser(index) {
                 renderUsersTable();
                 populateFilterDropdowns();
                 updateAdminDashboard();
-                showToast("Failed to delete user. Rolled back.", "error");
+                window.showToast("Failed to delete user. Rolled back.", "error");
             }
         }
     }
@@ -1024,16 +1024,16 @@ async function saveCustomerModal(e) {
     updateAdminDashboard();
     
     // Perform background DB sync
-    if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+    if (typeof window.dbSaveCustomer !== 'undefined' && window.supabaseClient) {
         try {
             if (index !== -1) {
                 const oldName = backupCustomers[index].name;
                 if (oldName !== name) {
-                    await dbDeleteCustomer(oldName);
+                    await window.dbDeleteCustomer(oldName);
                 }
             }
-            await dbSaveCustomer(newCustObj);
-            await syncFromSupabase();
+            await window.dbSaveCustomer(newCustObj);
+            await window.syncFromSupabase();
         } catch (err) {
             console.error("Error saving customer:", err);
             // Rollback local state
@@ -1042,7 +1042,7 @@ async function saveCustomerModal(e) {
             renderCustomersTable();
             populateFilterDropdowns();
             updateAdminDashboard();
-            showToast("Failed to save changes. Rolled back.", "error");
+            window.showToast("Failed to save changes. Rolled back.", "error");
         }
     }
 }
@@ -1068,10 +1068,10 @@ async function deleteCustomer(index) {
         showToast(`Customer "${name}" removed.`);
         
         // Perform background DB sync
-        if (typeof dbDeleteCustomer !== 'undefined' && supabaseClient) {
+        if (typeof window.dbDeleteCustomer !== 'undefined' && window.supabaseClient) {
             try {
-                await dbDeleteCustomer(name);
-                await syncFromSupabase();
+                await window.dbDeleteCustomer(name);
+                await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error deleting customer:", err);
                 // Rollback local state
@@ -1190,13 +1190,13 @@ async function savePartModal(e) {
     const newPartObj = { partNo, component, customer, process };
     
     if (index === -1) {
-        if (typeof dbSavePart !== 'undefined' && supabaseClient) {
+        if (typeof window.dbSavePart !== 'undefined' && window.supabaseClient) {
             try {
-                await dbSavePart(newPartObj);
-                await syncFromSupabase();
+                await window.dbSavePart(newPartObj);
+                await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error creating part:", err);
-                showToast("Failed to create part in database.", "error");
+                window.showToast("Failed to create part in database.", "error");
                 return;
             }
         } else {
@@ -1211,16 +1211,16 @@ async function savePartModal(e) {
     } else {
         const oldPartNo = parts[index].partNo;
         
-        if (typeof dbSavePart !== 'undefined' && supabaseClient) {
+        if (typeof window.dbSavePart !== 'undefined' && window.supabaseClient) {
             try {
                 if (oldPartNo !== partNo) {
-                    await dbDeletePart(oldPartNo);
+                    await window.dbDeletePart(oldPartNo);
                 }
-                await dbSavePart(newPartObj);
-                await syncFromSupabase();
+                await window.dbSavePart(newPartObj);
+                await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error updating part:", err);
-                showToast("Failed to update part in database.", "error");
+                window.showToast("Failed to update part in database.", "error");
                 return;
             }
         } else {
@@ -1242,13 +1242,13 @@ async function savePartModal(e) {
 async function deletePart(index) {
     const part = parts[index];
     if (confirm(`Are you sure you want to delete part "${part.partNo}"?`)) {
-        if (typeof dbDeletePart !== 'undefined' && supabaseClient) {
+        if (typeof window.dbDeletePart !== 'undefined' && window.supabaseClient) {
             try {
-                await dbDeletePart(part.partNo);
-                await syncFromSupabase();
+                await window.dbDeletePart(part.partNo);
+                await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error deleting part:", err);
-                showToast("Failed to delete part from database.", "error");
+                window.showToast("Failed to delete part from database.", "error");
                 return;
             }
         } else {
