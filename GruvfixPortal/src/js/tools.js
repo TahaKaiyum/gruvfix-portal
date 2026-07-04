@@ -269,14 +269,21 @@ function renderEmployeeToolRequests() {
         let statusBadge = '';
         let actionBtn = '—';
         
-        if (req.status === 'Requested') {
-            statusBadge = '<span class="status-badge pending" style="background-color: #dbeafe; color: #1e40af;">Requested</span>';
+        if (req.status === 'Pending Approval') {
+            statusBadge = '<span class="status-badge pending" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a;">Pending Approval</span>';
+            actionBtn = `<span style="font-size: 11px; color: var(--text-light); font-style: italic;">Awaiting Approval</span>`;
+        } else if (req.status === 'Approved' || req.status === 'Requested') {
+            statusBadge = '<span class="status-badge completed" style="background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">Approved</span>';
             actionBtn = `<button type="button" class="btn-reset" onclick="openReturnToolModal('${req.id}')" style="padding: 6px 12px; font-size: 11px; font-weight: 700; color: #b91c1c; border-color: #fca5a5; background-color: #fef2f2;">Return & Close</button>`;
+        } else if (req.status === 'Rejected') {
+            statusBadge = '<span class="status-badge danger" style="background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;">Rejected</span>';
+            actionBtn = `—`;
         } else if (req.status === 'Pending Close') {
-            statusBadge = '<span class="status-badge in-progress" style="background-color: #fef3c7; color: #92400e;">Pending Close</span>';
+            statusBadge = '<span class="status-badge in-progress" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Pending Close</span>';
             actionBtn = `<span style="font-size: 11px; color: var(--text-light); font-style: italic;">Awaiting Admin</span>`;
         } else {
-            statusBadge = '<span class="status-badge completed">Closed</span>';
+            statusBadge = '<span class="status-badge completed" style="background-color: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;">Closed</span>';
+            actionBtn = `—`;
         }
         
         const returnCond = req.conditionOnClose !== null ? `${req.conditionOnClose}%` : '—';
@@ -339,7 +346,7 @@ async function submitToolRequest(e) {
         customer: customer,
         toolName: toolName,
         requirements: requirements,
-        status: 'Requested',
+        status: 'Pending Approval',
         conditionOnClose: null
     };
     
@@ -431,14 +438,24 @@ function renderAdminToolRequestsTable() {
         let statusBadge = '';
         let actionBtn = '—';
         
-        if (req.status === 'Requested') {
-            statusBadge = '<span class="status-badge pending" style="background-color: #dbeafe; color: #1e40af;">Requested</span>';
+        if (req.status === 'Pending Approval') {
+            statusBadge = '<span class="status-badge pending" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a;">Pending Approval</span>';
+            actionBtn = `
+                <button type="button" class="btn-save" onclick="processToolRequestApproval('${req.id}', true)" style="padding: 6px 12px; font-size: 11px; font-weight: 700; margin-right: 6px; background-color: var(--primary-dark); border-color: var(--primary-dark);">Approve</button>
+                <button type="button" class="btn-reset" onclick="processToolRequestApproval('${req.id}', false)" style="padding: 6px 12px; font-size: 11px; font-weight: 700; color: #b91c1c; border-color: #fca5a5; background-color: #fef2f2;">Reject</button>
+            `;
+        } else if (req.status === 'Approved' || req.status === 'Requested') {
+            statusBadge = '<span class="status-badge pending" style="background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;">In Use</span>';
             actionBtn = `<span style="font-size: 11px; color: var(--text-light); font-style: italic;">Active (In Use)</span>`;
+        } else if (req.status === 'Rejected') {
+            statusBadge = '<span class="status-badge danger" style="background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;">Rejected</span>';
+            actionBtn = `—`;
         } else if (req.status === 'Pending Close') {
-            statusBadge = '<span class="status-badge in-progress" style="background-color: #fef3c7; color: #92400e;">Work Over</span>';
-            actionBtn = `<button type="button" class="btn-save" onclick="approveToolReturn('${req.id}')" style="padding: 6px 12px; font-size: 11px; font-weight: 700;">Close Request</button>`;
+            statusBadge = '<span class="status-badge in-progress" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a;">Work Over</span>';
+            actionBtn = `<button type="button" class="btn-save" onclick="approveToolReturn('${req.id}')" style="padding: 6px 12px; font-size: 11px; font-weight: 700; background-color: var(--primary-dark); border-color: var(--primary-dark);">Close Request</button>`;
         } else {
-            statusBadge = '<span class="status-badge completed">Closed</span>';
+            statusBadge = '<span class="status-badge completed" style="background-color: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;">Closed</span>';
+            actionBtn = `—`;
         }
         
         const returnCond = req.conditionOnClose !== null ? `${req.conditionOnClose}%` : '—';
@@ -456,6 +473,64 @@ function renderAdminToolRequestsTable() {
     });
 }
 
+async function processToolRequestApproval(reqId, isApproved) {
+    const req = toolRequests.find(r => r.id === reqId);
+    if (!req) return;
+
+    const actionText = isApproved ? 'approve' : 'reject';
+    if (confirm(`Are you sure you want to ${actionText} this tool request?`)) {
+        const updatedReq = {
+            ...req,
+            status: isApproved ? 'Approved' : 'Rejected'
+        };
+
+        if (typeof dbSaveToolRequest !== 'undefined' && supabaseClient) {
+            try {
+                await dbSaveToolRequest(updatedReq);
+
+                // Update quantity in master inventory if the tool matches by name and is approved
+                if (isApproved) {
+                    const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
+                    if (masterTool) {
+                        const updatedTool = {
+                            ...masterTool,
+                            qty: Math.max(0, masterTool.qty - 1)
+                        };
+                        await dbSaveTool(updatedTool);
+                        showToast(`Request approved. Tool "${masterTool.name}" quantity decreased by 1 in inventory.`);
+                    } else {
+                        showToast('Request approved successfully (no matching tool in inventory).');
+                    }
+                } else {
+                    showToast('Request rejected successfully.');
+                }
+
+                await syncFromSupabase();
+            } catch (err) {
+                console.error(`Error processing ${actionText}:`, err);
+                showToast(`Failed to ${actionText} request in database.`, "error");
+                return;
+            }
+        } else {
+            req.status = isApproved ? 'Approved' : 'Rejected';
+            if (isApproved) {
+                const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
+                if (masterTool) {
+                    masterTool.qty = Math.max(0, masterTool.qty - 1);
+                    showToast(`Request approved. Tool "${masterTool.name}" quantity decreased by 1 in inventory.`);
+                } else {
+                    showToast('Request approved successfully.');
+                }
+            } else {
+                showToast('Request rejected successfully.');
+            }
+        }
+
+        renderAdminToolRequestsTable();
+        renderToolsTable(); // Sync tools table in background
+    }
+}
+
 async function approveToolReturn(reqId) {
     const req = toolRequests.find(r => r.id === reqId);
     if (!req) return;
@@ -471,15 +546,16 @@ async function approveToolReturn(reqId) {
             try {
                 await dbSaveToolRequest(updatedReq);
                 
-                // Update condition in master inventory if the tool matches by name
+                // Update condition and increment quantity in master inventory if the tool matches by name
                 const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
-                if (masterTool && req.conditionOnClose !== null) {
+                if (masterTool) {
                     const updatedTool = {
                         ...masterTool,
-                        condition: req.conditionOnClose
+                        qty: masterTool.qty + 1,
+                        condition: req.conditionOnClose !== null ? req.conditionOnClose : masterTool.condition
                     };
                     await dbSaveTool(updatedTool);
-                    showToast(`Request closed. Tool "${masterTool.name}" condition updated to ${req.conditionOnClose}% in inventory.`);
+                    showToast(`Request closed. Tool "${masterTool.name}" returned to inventory (Qty +1) and condition updated to ${req.conditionOnClose !== null ? req.conditionOnClose : masterTool.condition}%.`);
                 } else {
                     showToast('Request closed successfully.');
                 }
@@ -493,9 +569,12 @@ async function approveToolReturn(reqId) {
         } else {
             req.status = 'Closed';
             const masterTool = tools.find(t => t.name.toLowerCase().trim() === req.toolName.toLowerCase().trim());
-            if (masterTool && req.conditionOnClose !== null) {
-                masterTool.condition = req.conditionOnClose;
-                showToast(`Request closed. Tool "${masterTool.name}" condition updated to ${req.conditionOnClose}% in inventory.`);
+            if (masterTool) {
+                masterTool.qty = masterTool.qty + 1;
+                if (req.conditionOnClose !== null) {
+                    masterTool.condition = req.conditionOnClose;
+                }
+                showToast(`Request closed. Tool "${masterTool.name}" returned to inventory (Qty +1) and condition updated.`);
             } else {
                 showToast('Request closed successfully.');
             }
@@ -511,7 +590,7 @@ export {
     renderToolsTable, openAddToolModal, openEditToolModal, saveToolModal, deleteTool,
     exportToolsToExcel, renderEmployeeToolRequests, handleCustomerSelectChange,
     submitToolRequest, openReturnToolModal, submitReturnTool,
-    renderAdminToolRequestsTable, approveToolReturn
+    renderAdminToolRequestsTable, approveToolReturn, processToolRequestApproval
 };
 
 // Bind functions to window for backward compatibility
@@ -528,5 +607,6 @@ window.openReturnToolModal = openReturnToolModal;
 window.submitReturnTool = submitReturnTool;
 window.renderAdminToolRequestsTable = renderAdminToolRequestsTable;
 window.approveToolReturn = approveToolReturn;
+window.processToolRequestApproval = processToolRequestApproval;
 
 

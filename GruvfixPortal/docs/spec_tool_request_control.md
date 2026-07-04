@@ -35,37 +35,44 @@ The **Tool Request Control System** provides a workflow for shop floor operators
   * Dropdown selector for **Customer** containing all clients in the master customer array.
   * An option in the Customer dropdown labeled **"Other / Custom Customer"** which, when selected, displays a text input for specifying custom company names.
   * Textarea for **Requirements / Specifications**.
-* Submission shall push a new request to the database with state `Requested`.
+* Submission shall push a new request to the database with state `Pending Approval`.
 
 ### `[FR-02]` Request Lifecycle & State Transitions
 * The tool request record shall transition through the following states:
   
 ```mermaid
 stateDiagram-v2
-    [*] --> Requested : Employee Submits Request
-    Requested --> Pending_Close : Employee Clicks "Return & Close" and enters condition (%)
+    [*] --> Pending_Approval : Employee Submits Request
+    Pending_Approval --> Approved : Admin Clicks "Approve"
+    Pending_Approval --> Rejected : Admin Clicks "Reject"
+    Approved --> Pending_Close : Employee Clicks "Return & Close" and enters condition (%)
     Pending_Close --> Closed : Admin Clicks "Close Request"
 ```
 
-* **Requested**: Tool is issued and active on the shop floor.
+* **Pending Approval**: Requested by employee, awaiting admin verification.
+* **Approved**: Verified by admin. Tool stock quantity in master inventory is decremented by 1. Tool is issued and active on the shop floor.
+* **Rejected**: Disapproved by admin. No changes are made to master tool inventory.
 * **Pending Close**: Machining is over; operator has logged return wear condition.
-* **Closed**: Admin approved return; condition synchronized in master inventory.
+* **Closed**: Admin approved return; condition is updated, and quantity is incremented by 1 back into the master inventory.
 
 ### `[FR-03]` Employee History Table (Employee Side)
 * Employees shall only see their own requests filtered by their `employeeId`.
-* For `Requested` entries, a **Return & Close** button shall be visible.
-* For `Pending Close` entries, a status text saying "Awaiting Admin" shall be visible.
+* For `Pending Approval` entries, status shows as "Pending Approval" and no actions are available.
+* For `Approved` entries, status shows as "Approved" and the **Return & Close** button shall be visible.
+* For `Rejected` entries, status shows as "Rejected" and no actions are available.
+* For `Pending Close` entries, status shows as "Pending Close" and a status text saying "Awaiting Admin" shall be visible.
 * For `Closed` entries, the status badge changes to `Closed` along with the logged return condition.
 
 ### `[FR-04]` Admin Tool Requests Control Board (Admin Side)
 * Admins shall see a table listing all tool requests from all operators in the system.
-* Active requests (`Requested`) show as "Active (In Use)".
+* Requests marked `Pending Approval` display **Approve** and **Reject** action buttons.
+* Active requests (`Approved` or legacy `Requested`) show as "In Use" with status label "Active (In Use)".
 * Requests marked `Pending Close` display a **Close Request** button.
 * Approving a return updates the request state to `Closed`.
 
 ### `[FR-05]` Master Inventory Synchronization
-* Upon admin approval of a tool request closure, the system shall search the master `tools` list for a tool name matching the request's `toolName` (case-insensitive, trimmed match).
-* If a match is found, the tool's `condition` value in the master database shall be updated to the `conditionOnClose` percentage reported by the operator.
+* Upon admin approval of a tool request, the master inventory stock quantity (`qty`) for the matching tool is decremented by 1.
+* Upon admin approval of a tool request closure (Return), the master inventory stock quantity (`qty`) is incremented by 1, and its `condition` value in the master database is updated to the `conditionOnClose` percentage reported by the operator.
 * If no match is found (e.g., custom tool request), the request closes normally without throwing errors.
 
 ---
@@ -81,7 +88,7 @@ interface ToolRequest {
     customer: string;         // Customer Name (string, master customer or custom)
     toolName: string;         // Name of tool requested (string)
     requirements: string;     // Specifications, sizes, flutes, etc.
-    status: 'Requested' | 'Pending Close' | 'Closed'; // Lifecycle State
+    status: 'Pending Approval' | 'Approved' | 'Rejected' | 'Pending Close' | 'Closed' | 'Requested'; // Lifecycle State
     conditionOnClose: number | null; // Final condition percentage (0-100) logged by employee
 }
 ```
