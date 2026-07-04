@@ -6,6 +6,31 @@
 
 var supabaseClient = window.supabaseClient;
 
+// Helper to decode status from requirements (to bypass db constraints)
+function decodeStatusFromRequirements(dbRequirements, dbStatus) {
+    if (!dbRequirements) {
+        return {
+            requirements: '',
+            status: dbStatus === 'Requested' ? 'Approved' : dbStatus
+        };
+    }
+    const match = dbRequirements.match(/\n__status:\s*([^\n]+)$/);
+    if (match) {
+        const status = match[1].trim();
+        const requirements = dbRequirements.replace(/\n__status:\s*[^\n]+$/, '');
+        return { requirements, status };
+    } else {
+        let mappedStatus = dbStatus;
+        if (dbStatus === 'Requested') {
+            mappedStatus = 'Approved';
+        }
+        return {
+            requirements: dbRequirements,
+            status: mappedStatus
+        };
+    }
+}
+
 // ==========================================
 // 2. DATE GENERATION HELPERS
 // ==========================================
@@ -262,16 +287,19 @@ async function syncFromSupabase() {
             .from('tool_requests')
             .select('*');
         if (reqErr) throw reqErr;
-        toolRequests = dbRequests.map(r => ({
-            id: r.id,
-            employeeId: r.employee_id,
-            employeeName: r.employee_name,
-            customer: r.customer,
-            toolName: r.tool_name,
-            requirements: r.requirements,
-            status: r.status,
-            conditionOnClose: r.condition_on_close
-        }));
+        toolRequests = dbRequests.map(r => {
+            const { requirements, status } = decodeStatusFromRequirements(r.requirements, r.status);
+            return {
+                id: r.id,
+                employeeId: r.employee_id,
+                employeeName: r.employee_name,
+                customer: r.customer,
+                toolName: r.tool_name,
+                requirements: requirements,
+                status: status,
+                conditionOnClose: r.condition_on_close
+            };
+        });
         
         // 6. Fetch Logs
         const { data: dbLogs, error: logsErr } = await supabaseClient
@@ -378,6 +406,19 @@ async function dbDeletePart(partNo) {
 
 async function dbSaveToolRequest(reqObj) {
     if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    
+    // Map the rich JS status to an allowed DB status
+    let dbStatus = 'Requested';
+    if (reqObj.status === 'Pending Close') {
+        dbStatus = 'Pending Close';
+    } else if (reqObj.status === 'Closed' || reqObj.status === 'Rejected') {
+        dbStatus = 'Closed';
+    }
+    
+    // Encode the rich JS status inside requirements field
+    const cleanRequirements = (reqObj.requirements || '').replace(/\n__status:[\s\S]*$/, '');
+    const dbRequirements = cleanRequirements + `\n__status: ${reqObj.status}`;
+    
     const { error } = await supabaseClient
         .from('tool_requests')
         .upsert({
@@ -386,8 +427,8 @@ async function dbSaveToolRequest(reqObj) {
             employee_name: reqObj.employeeName,
             customer: reqObj.customer,
             tool_name: reqObj.toolName,
-            requirements: reqObj.requirements,
-            status: reqObj.status,
+            requirements: dbRequirements,
+            status: dbStatus,
             condition_on_close: reqObj.conditionOnClose
         });
     if (error) throw error;
