@@ -26,20 +26,23 @@ function renderToolsTable() {
         const mainIndex = tools.findIndex(t => t.name === tool.name);
         const tr = document.createElement('tr');
         
-        let color = '#10b981'; // green
-        if (tool.condition < 50) {
-            color = '#ef4444'; // red
-        } else if (tool.condition < 80) {
-            color = '#f59e0b'; // amber
+        let color = '#10b981'; // green (Good)
+        let bgColor = '#dcfce7';
+        let borderColor = '#bbf7d0';
+        if (tool.condition === 'Broken') {
+            color = '#b91c1c'; // red (Broken)
+            bgColor = '#fee2e2';
+            borderColor = '#fca5a5';
+        } else if (tool.condition === 'OK') {
+            color = '#d97706'; // amber (OK)
+            bgColor = '#fef3c7';
+            borderColor = '#fde68a';
         }
         
         const conditionMeter = `
-            <div class="tool-condition-meter-wrapper" style="display: flex; align-items: center; gap: 8px;">
-                <div class="progress-bar-bg" style="width: 80px; height: 10px; background-color: #e5e7eb; border-radius: 9999px; overflow: hidden; border: 1px solid #d1d5db;">
-                    <div class="progress-bar-fill" style="width: ${tool.condition}%; height: 100%; background-color: ${color}; transition: width 0.3s ease;"></div>
-                </div>
-                <span style="font-size: 12px; font-weight: 600; color: var(--text-dark);">${tool.condition}%</span>
-            </div>
+            <span class="status-badge" style="background-color: ${bgColor}; color: ${color}; border: 1px solid ${borderColor}; padding: 4px 10px; font-size: 11px; font-weight: 600;">
+                ${tool.condition}
+            </span>
         `;
         
         const editIcon = `
@@ -95,7 +98,7 @@ function openAddToolModal() {
     if (flute) flute.value = '';
     if (len) len.value = '';
     if (qty) qty.value = '1';
-    if (cond) cond.value = '100';
+    if (cond) cond.value = 'Good';
     
     openModal('modal-tool');
 }
@@ -122,7 +125,7 @@ function openEditToolModal(index) {
     if (flute) flute.value = tool.fluteLen;
     if (len) len.value = tool.toolLen;
     if (qty) qty.value = tool.qty;
-    if (cond) cond.value = tool.condition;
+    if (cond) cond.value = tool.condition || 'Good';
     
     openModal('modal-tool');
 }
@@ -146,7 +149,7 @@ async function saveToolModal(e) {
     const fluteLen = fluteEl ? fluteEl.value.trim() : '';
     const toolLen = lenEl ? lenEl.value.trim() : '';
     const qty = qtyEl ? (parseInt(qtyEl.value) || 0) : 0;
-    const condition = condEl ? Math.min(100, Math.max(0, parseInt(condEl.value) || 0)) : 100;
+    const condition = condEl ? condEl.value : 'Good';
     
     const newToolObj = { name, dia, fluteLen, toolLen, toolDia, qty, condition };
     
@@ -222,14 +225,14 @@ async function deleteTool(index) {
 
 function exportToolsToExcel() {
     const today = new Date().toISOString().split('T')[0];
-    let csv = 'Tool Name,Dia (Shank),Flute Length,Tool Length,Tool Dia,Quantity,Condition (%)\n';
+    let csv = 'Tool Name,Dia (Shank),Flute Length,Tool Length,Tool Dia,Quantity,Condition\n';
     
     const searchEl = document.getElementById('admin-search-tools');
     const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
     const filtered = tools.filter(t => t.name.toLowerCase().includes(query));
     
     filtered.forEach(t => {
-        csv += `"${t.name}","${t.dia}","${t.fluteLen}","${t.toolLen}","${t.toolDia}","${t.qty}","${t.condition}%"\n`;
+        csv += `"${t.name}","${t.dia}","${t.fluteLen}","${t.toolLen}","${t.toolDia}","${t.qty}","${t.condition}"\n`;
     });
     
     downloadCSV(csv, `gruvfix_tools_inventory_${today}.csv`);
@@ -314,14 +317,29 @@ function renderEmployeeToolRequests() {
             actionBtn = `—`;
         }
         
-        const returnCond = req.conditionOnClose !== null ? `${req.conditionOnClose}%` : '—';
+        let returnCond = '—';
+        if (req.conditionOnClose !== null) {
+            let condColor = '#10b981'; // green (Good)
+            let condBg = '#dcfce7';
+            let condBorder = '#bbf7d0';
+            if (req.conditionOnClose === 'Broken') {
+                condColor = '#b91c1c';
+                condBg = '#fee2e2';
+                condBorder = '#fca5a5';
+            } else if (req.conditionOnClose === 'OK') {
+                condColor = '#d97706';
+                condBg = '#fef3c7';
+                condBorder = '#fde68a';
+            }
+            returnCond = `<span class="status-badge" style="background-color: ${condBg}; color: ${condColor}; border: 1px solid ${condBorder}; padding: 4px 10px; font-size: 11px; font-weight: 600;">${req.conditionOnClose}</span>`;
+        }
         
         tr.innerHTML = `
             <td><strong>${req.toolName}</strong></td>
             <td>${req.customer}</td>
             <td><span style="font-size: 12px; color: var(--text-medium);">${req.requirements}</span></td>
             <td>${statusBadge}</td>
-            <td><strong>${returnCond}</strong></td>
+            <td>${returnCond}</td>
             <td style="text-align: right;">${actionBtn}</td>
         `;
         tbody.appendChild(tr);
@@ -412,7 +430,7 @@ function openReturnToolModal(reqId) {
     if (idInput) idInput.value = reqId;
     
     const condInput = document.getElementById('modal-return-condition');
-    if (condInput) condInput.value = '90';
+    if (condInput) condInput.value = 'Good';
     
     openModal('modal-return-tool');
 }
@@ -424,14 +442,14 @@ async function submitReturnTool(e) {
     const condInput = document.getElementById('modal-return-condition');
     
     const reqId = idInput ? idInput.value : '';
-    const condition = condInput ? (parseInt(condInput.value) || 0) : 90;
+    const condition = condInput ? condInput.value : 'Good';
     
     const req = toolRequests.find(r => r.id === reqId);
     if (req) {
         const updatedReq = {
             ...req,
             status: 'Pending Close',
-            conditionOnClose: Math.min(100, Math.max(0, condition))
+            conditionOnClose: condition
         };
         
         if (typeof dbSaveToolRequest !== 'undefined' && supabaseClient) {
@@ -445,7 +463,7 @@ async function submitReturnTool(e) {
             }
         } else {
             req.status = 'Pending Close';
-            req.conditionOnClose = Math.min(100, Math.max(0, condition));
+            req.conditionOnClose = condition;
             toolRequests = [...toolRequests];
         }
         showToast('Return submitted. Tool work is over and pending admin closure.');
@@ -491,7 +509,22 @@ function renderAdminToolRequestsTable() {
             actionBtn = `—`;
         }
         
-        const returnCond = req.conditionOnClose !== null ? `${req.conditionOnClose}%` : '—';
+        let returnCond = '—';
+        if (req.conditionOnClose !== null) {
+            let condColor = '#10b981'; // green (Good)
+            let condBg = '#dcfce7';
+            let condBorder = '#bbf7d0';
+            if (req.conditionOnClose === 'Broken') {
+                condColor = '#b91c1c';
+                condBg = '#fee2e2';
+                condBorder = '#fca5a5';
+            } else if (req.conditionOnClose === 'OK') {
+                condColor = '#d97706';
+                condBg = '#fef3c7';
+                condBorder = '#fde68a';
+            }
+            returnCond = `<span class="status-badge" style="background-color: ${condBg}; color: ${condColor}; border: 1px solid ${condBorder}; padding: 4px 10px; font-size: 11px; font-weight: 600;">${req.conditionOnClose}</span>`;
+        }
         
         tr.innerHTML = `
             <td><strong>${req.employeeName}</strong> <span style="font-size:11px; color:var(--text-light);">(${req.employeeId})</span></td>
@@ -499,7 +532,7 @@ function renderAdminToolRequestsTable() {
             <td><strong>${req.toolName}</strong></td>
             <td><span style="font-size: 12px; color: var(--text-medium);">${req.requirements}</span></td>
             <td>${statusBadge}</td>
-            <td><strong>${returnCond}</strong></td>
+            <td>${returnCond}</td>
             <td style="text-align: right;">${actionBtn}</td>
         `;
         tbody.appendChild(tr);
@@ -590,7 +623,7 @@ async function approveToolReturn(reqId) {
                         condition: req.conditionOnClose !== null ? req.conditionOnClose : masterTool.condition
                     };
                     await dbSaveTool(updatedTool);
-                    showToast(`Request closed. Tool "${masterTool.name}" returned to inventory (Qty +1) and condition updated to ${req.conditionOnClose !== null ? req.conditionOnClose : masterTool.condition}%.`);
+                    showToast(`Request closed. Tool "${masterTool.name}" returned to inventory (Qty +1) and condition updated to ${req.conditionOnClose !== null ? req.conditionOnClose : masterTool.condition}.`);
                 } else {
                     showToast('Request closed successfully.');
                 }

@@ -6,6 +6,23 @@
 
 var supabaseClient = window.supabaseClient;
 
+// Helper to decode condition from DB integer to status string
+function decodeCondition(dbVal) {
+    if (dbVal === null || dbVal === undefined) return 'Good';
+    const val = parseInt(dbVal);
+    if (isNaN(val)) return 'Good';
+    if (val >= 80) return 'Good';
+    if (val >= 30) return 'OK';
+    return 'Broken';
+}
+
+// Helper to encode status string to DB integer condition
+function encodeCondition(strVal) {
+    if (strVal === 'OK') return 50;
+    if (strVal === 'Broken') return 0;
+    return 100; // 'Good'
+}
+
 // Helper to decode status from requirements (to bypass db constraints)
 function decodeStatusFromRequirements(dbRequirements, dbStatus) {
     if (!dbRequirements) {
@@ -279,7 +296,7 @@ async function syncFromSupabase() {
             toolLen: t.tool_len,
             toolDia: t.tool_dia,
             qty: t.qty,
-            condition: t.condition
+            condition: decodeCondition(t.condition)
         }));
         
         // 5. Fetch Tool Requests
@@ -297,7 +314,7 @@ async function syncFromSupabase() {
                 toolName: r.tool_name,
                 requirements: requirements,
                 status: status,
-                conditionOnClose: r.condition_on_close
+                conditionOnClose: r.condition_on_close !== null ? decodeCondition(r.condition_on_close) : null
             };
         });
         
@@ -429,7 +446,7 @@ async function dbSaveToolRequest(reqObj) {
             tool_name: reqObj.toolName,
             requirements: dbRequirements,
             status: dbStatus,
-            condition_on_close: reqObj.conditionOnClose
+            condition_on_close: reqObj.conditionOnClose !== null ? encodeCondition(reqObj.conditionOnClose) : null
         });
     if (error) throw error;
 }
@@ -477,7 +494,7 @@ async function dbSaveTool(toolObj) {
             tool_len: toolObj.toolLen,
             tool_dia: toolObj.toolDia,
             qty: toolObj.qty,
-            condition: toolObj.condition
+            condition: encodeCondition(toolObj.condition)
         });
     if (error) throw error;
 }
