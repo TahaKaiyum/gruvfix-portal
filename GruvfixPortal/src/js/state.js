@@ -501,6 +501,16 @@ async function dbDeleteLog(id) {
     if (error) throw error;
 }
 
+async function dbDeleteAllTodayLogs(employeeId, dateStr) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    const { error } = await supabaseClient
+        .from('logs')
+        .delete()
+        .eq('employee', employeeId)
+        .eq('date', dateStr);
+    if (error) throw error;
+}
+
 async function dbSaveTool(toolObj) {
     if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
     const { error } = await supabaseClient
@@ -544,7 +554,7 @@ export {
     getTodayDateString, getRelativeDateString, cascadeCustomerUpdate, cascadePartUpdate, cascadeEmployeeUpdate,
     showToast, openModal, closeModal, openLogDetailsModal, syncFromSupabase,
     dbSaveUser, dbDeleteUser, dbSaveCustomer, dbDeleteCustomer, dbSavePart, dbDeletePart,
-    dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbSaveTool, dbDeleteTool, dbSaveSystemSettings
+    dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbDeleteAllTodayLogs, dbSaveTool, dbDeleteTool, dbSaveSystemSettings
 };
 
 // Bind all state functions to window
@@ -567,10 +577,7 @@ window.dbDeletePart = dbDeletePart;
 window.dbSaveToolRequest = dbSaveToolRequest;
 window.dbSaveLog = dbSaveLog;
 window.dbDeleteLog = dbDeleteLog;
+window.dbDeleteAllTodayLogs = dbDeleteAllTodayLogs;
 window.dbSaveTool = dbSaveTool;
 window.dbDeleteTool = dbDeleteTool;
 window.dbSaveSystemSettings = dbSaveSystemSettings;
-
-
-
-
