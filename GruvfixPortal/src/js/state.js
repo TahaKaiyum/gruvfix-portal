@@ -343,6 +343,9 @@ async function syncFromSupabase() {
         
         console.log("State synced from Supabase successfully!");
         toggleLoadingSkeletons(false);
+        if (typeof window.updateHomepageMetrics === 'function') {
+            window.updateHomepageMetrics();
+        }
     } catch (err) {
         console.error("Error syncing from Supabase:", err);
         showToast("Database sync error. Using offline state.", "error");

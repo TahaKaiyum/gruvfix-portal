@@ -22,6 +22,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Sync state from Supabase on start
     await syncFromSupabase();
 
+    // Initial homepage metrics update
+    updateHomepageMetrics();
+
     // Subscribe dashboard views to appStore changes to redraw automatically and reactively
     appStore.subscribe((state) => {
         if (!state.isLoggedIn) return;
@@ -154,6 +157,34 @@ function addLiveTerminalLog(text, tag = 'success') {
     }
 }
 
+// Global helper for homepage metrics
+function updateHomepageMetrics() {
+    const partsEl = document.getElementById('homepage-metric-parts');
+    const opsEl = document.getElementById('homepage-metric-operators');
+    const reqsEl = document.getElementById('homepage-metric-tool-reqs');
+    
+    if (partsEl) {
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const dbTodayParts = (typeof historicalEntries !== 'undefined' ? historicalEntries : [])
+            .filter(e => e.date === todayStr)
+            .reduce((sum, e) => sum + (parseInt(e.qty) || 0), 0);
+        
+        const baseParts = dbTodayParts > 0 ? dbTodayParts : 1286;
+        partsEl.textContent = (baseParts + (shiftPartsCount - 284)).toLocaleString();
+    }
+    if (opsEl) {
+        const dbActiveOps = (typeof users !== 'undefined' ? users : [])
+            .filter(u => u.role === 'employee' && u.active).length;
+        opsEl.textContent = dbActiveOps > 0 ? dbActiveOps : 31;
+    }
+    if (reqsEl) {
+        const pendingRequests = (typeof toolRequests !== 'undefined' ? toolRequests : [])
+            .filter(r => r.status === 'Pending Approval').length;
+        reqsEl.textContent = pendingRequests;
+    }
+}
+window.updateHomepageMetrics = updateHomepageMetrics;
+
 // ==========================================
 // 3. PERIODIC SHOP FLOOR TELEMETRY SIMULATOR
 // ==========================================
@@ -167,8 +198,8 @@ setInterval(() => {
     }
     
     // Generate telemetry (simulated shift floor logs) using loaded database data
-    const empUsers = users.filter(u => u.role === 'employee' && u.active);
-    if (empUsers.length === 0 || customers.length === 0) {
+    const empUsers = (typeof users !== 'undefined' ? users : []).filter(u => u.role === 'employee' && u.active);
+    if (empUsers.length === 0 || (typeof customers !== 'undefined' && customers.length === 0)) {
         return; // Skip simulation if database is not loaded yet or has no data
     }
     
@@ -182,7 +213,7 @@ setInterval(() => {
     const qty = Math.floor(Math.random() * 40) + 10;
     
     // Look up part choice dynamically
-    const customerParts = parts.filter(p => p.customer === customer);
+    const customerParts = (typeof parts !== 'undefined' ? parts : []).filter(p => p.customer === customer);
     let partNo = 'PT-A';
     
     if (customerParts.length > 0) {
@@ -196,6 +227,11 @@ setInterval(() => {
     
     // If we're on the login screen, show updates in real-time
     shiftPartsCount += qty;
+    
+    // Update metrics dynamically
+    updateHomepageMetrics();
+    
+    // Also support legacy elements if they are present in DOM
     const monitorPartsEl = document.getElementById('monitor-stat-parts');
     if (monitorPartsEl) {
         monitorPartsEl.innerHTML = `${shiftPartsCount} <span class="target-sub">/ 350</span>`;

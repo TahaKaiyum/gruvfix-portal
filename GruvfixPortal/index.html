@@ -16,166 +16,104 @@
 
     <!-- MAIN LOGIN CONTAINER (Split-Screen) -->
     <div id="login-page" class="page active">
-        <div class="split-container">
-            <!-- Left Side: Login Form -->
-            <div class="login-side">
-                <div class="login-left-wrapper">
-                    <!-- Brand Logo -->
-                    <div class="logo-box">
-                        <img src="Logo.png" alt="Gruvfix Logo" class="brand-logo-img">
+        <div class="homepage-container">
+            <div class="homepage-card">
+                <!-- Brand Logo -->
+                <div class="logo-box">
+                    <img src="Logo.png" alt="Gruvfix Logo" class="brand-logo-img">
+                </div>
+
+                <!-- Title & Subtitle -->
+                <div class="login-header">
+                    <h1>Gruvfix Manufacturing Portal</h1>
+                    <p class="subtitle">Production Operations Platform</p>
+                </div>
+
+                <!-- Role Selector Tabs -->
+                <div class="role-selector">
+                    <button type="button" id="tab-admin" class="role-tab active" onclick="switchRole('admin')">
+                        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Admin
+                    </button>
+                    <button type="button" id="tab-employee" class="role-tab" onclick="switchRole('employee')">
+                        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        Employee
+                    </button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-instruction" id="form-instruction">LOGIN WITH ADMIN EMAIL</div>
+                    
+                    <div class="form-group" id="input-group-email">
+                        <label for="login-username" id="label-username">EMAIL</label>
+                        <input type="text" id="login-username" placeholder="admin@gruvfix.com" required autocomplete="username">
                     </div>
 
-                    <!-- Title & Subtitle -->
-                    <div class="login-header">
-                        <h1>Production Monitor</h1>
-                        <p>Hourly work tracking for Gruvfix Gaskets and Seals LLP. Sign in to access your role-specific console.</p>
+                    <div class="form-group">
+                        <label for="login-password">PASSWORD</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
                     </div>
 
-                    <!-- Role Selector Tabs -->
-                    <div class="role-selector">
-                        <button type="button" id="tab-admin" class="role-tab active" onclick="switchRole('admin')">
-                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                <path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            Admin
-                        </button>
-                        <button type="button" id="tab-employee" class="role-tab" onclick="switchRole('employee')">
-                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4"/>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                            Employee
-                        </button>
+                    <button type="submit" class="btn-submit">
+                        Sign in
+                    </button>
+                </form>
+
+                <!-- Default Credentials Box -->
+                <div class="credentials-box">
+                    <div class="cred-title">DEFAULT CREDENTIALS</div>
+                    <div class="cred-row">
+                        <span class="cred-label">Admin:</span>
+                        <span class="cred-value" onclick="fillCreds('admin@gruvfix.com', 'Admin123')">admin@gruvfix.com / Admin123</span>
                     </div>
-
-                    <!-- Login Form -->
-                    <form id="login-form" onsubmit="handleLogin(event)">
-                        <div class="form-instruction" id="form-instruction">LOGIN WITH ADMIN EMAIL</div>
-                        
-                        <div class="form-group" id="input-group-email">
-                            <label for="login-username" id="label-username">EMAIL</label>
-                            <input type="text" id="login-username" placeholder="admin@gruvfix.com" required autocomplete="username">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="login-password">PASSWORD</label>
-                            <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
-                        </div>
-
-                        <button type="submit" class="btn-submit">
-                            Sign in
-                        </button>
-                    </form>
-
-                    <!-- Default Credentials Box -->
-                    <div class="credentials-box">
-                        <div class="cred-title">DEFAULT CREDENTIALS</div>
-                        <div class="cred-row">
-                            <span class="cred-label">Admin:</span>
-                            <span class="cred-value" onclick="fillCreds('admin@gruvfix.com', 'Admin123')">admin@gruvfix.com / Admin123</span>
-                        </div>
-                        <div class="cred-row">
-                            <span class="cred-label">Employee:</span>
-                            <span class="cred-value" onclick="fillCreds('EMP001', 'Emp@12345')">EMP001 / Emp@12345</span>
-                        </div>
+                    <div class="cred-row">
+                        <span class="cred-label">Employee:</span>
+                        <span class="cred-value" onclick="fillCreds('EMP001', 'Emp@12345')">EMP001 / Emp@12345</span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Right Side: Dark Green Tinted Marketing/Stats -->
-            <div class="image-side">
-                <div class="image-overlay"></div>
-                <div class="image-content live-monitor-content">
-                    <!-- Live Header -->
-                    <div class="monitor-header">
-                        <div class="live-indicator">
-                            <span class="live-dot animate-pulse"></span>
-                            <span class="live-text">LIVE SHOP FLOOR MONITOR</span>
+                <!-- Divider Line -->
+                <hr class="homepage-divider">
+
+                <!-- Real-time Production Metrics Section -->
+                <div class="metrics-section">
+                    <h2 class="metrics-title">Real-time Production Metrics</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <span class="metric-value text-green">94.2%</span>
+                            <span class="metric-label">Today's Efficiency</span>
                         </div>
-                        <span class="shift-badge">SHIFT A (08:00 - 20:00)</span>
-                    </div>
-
-                    <!-- Machine Statuses Grid -->
-                    <div class="monitor-section">
-                        <div class="section-title">ACTIVE MACHINES</div>
-                        <div class="machine-grid">
-                            <div class="machine-card status-running">
-                                <div class="machine-info">
-                                    <span class="machine-name">CNC-01</span>
-                                    <span class="machine-status">RUNNING</span>
-                                </div>
-                                <span class="indicator-dot glow-green"></span>
-                            </div>
-                            <div class="machine-card status-running">
-                                <div class="machine-info">
-                                    <span class="machine-name">CNC-02</span>
-                                    <span class="machine-status">RUNNING</span>
-                                </div>
-                                <span class="indicator-dot glow-green"></span>
-                            </div>
-                            <div class="machine-card status-idle">
-                                <div class="machine-info">
-                                    <span class="machine-name">CNC-03</span>
-                                    <span class="machine-status">IDLE</span>
-                                </div>
-                                <span class="indicator-dot glow-amber"></span>
-                            </div>
-                            <div class="machine-card status-maintenance">
-                                <div class="machine-info">
-                                    <span class="machine-name">PNS-01</span>
-                                    <span class="machine-status">DOWN</span>
-                                </div>
-                                <span class="indicator-dot glow-red"></span>
-                            </div>
+                        <div class="metric-card">
+                            <span class="metric-value" id="homepage-metric-parts">0</span>
+                            <span class="metric-label">Parts Produced Today</span>
                         </div>
-                    </div>
-
-                    <!-- Production Stats -->
-                    <div class="monitor-section">
-                        <div class="section-title">SHIFT METRICS</div>
-                        <div class="metrics-grid">
-                            <div class="metric-card">
-                                <span class="metric-label">OEE (FLOOR AVERAGE)</span>
-                                <span class="metric-value">94.2% <span class="trend-up">↑</span></span>
-                            </div>
-                            <div class="metric-card">
-                                <span class="metric-label">PARTS PRODUCED</span>
-                                <span class="metric-value" id="monitor-stat-parts">284 <span class="target-sub">/ 350</span></span>
-                            </div>
-                            <div class="metric-card">
-                                <span class="metric-label">OPERATORS ON SHIFT</span>
-                                <span class="metric-value">3</span>
-                            </div>
+                        <div class="metric-card">
+                            <span class="metric-value" id="homepage-metric-operators">0</span>
+                            <span class="metric-label">Active Operators</span>
                         </div>
-                    </div>
-
-                    <!-- Live Terminal Feed -->
-                    <div class="monitor-section">
-                        <div class="section-title">LIVE SHIFT LOG</div>
-                        <div class="terminal-log" id="live-terminal-log">
-                            <div class="log-line">
-                                <span class="log-time">[15:44]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP001 saved 15 parts for Acme Test on CNC-03
-                            </div>
-                            <div class="log-line">
-                                <span class="log-time">[15:30]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP003 saved 50 parts for TATA MOTORS on PNS-01
-                            </div>
-                            <div class="log-line">
-                                <span class="log-time">[15:15]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP002 saved 40 parts for RELIANCE on MLD-02
-                            </div>
-                            <div class="log-line">
-                                <span class="log-time">[14:55]</span> <span class="log-tag tag-success">LOGGED</span> Operator EMP001 saved 10 parts for Acme Test on CNC-03
-                            </div>
+                        <div class="metric-card">
+                            <span class="metric-value text-amber" id="homepage-metric-tool-reqs">0</span>
+                            <span class="metric-label">Pending Tool Requests</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Copyright Footer -->
-                <div class="made-with-watermark">
-                    <span class="copyright-text">© 2026 Gruvfix Gaskets and Seals LLP. All rights reserved.</span>
-                </div>
+                <!-- Divider Line -->
+                <hr class="homepage-divider">
+
+                <!-- Quote Footer -->
+                <footer class="homepage-footer">
+                    <p>"Manufacturing Excellence Through Digitalization"</p>
+                </footer>
             </div>
         </div>
     </div>
