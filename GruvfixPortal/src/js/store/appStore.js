@@ -21,7 +21,18 @@ let state = {
     tools: [],
     toolRequests: [],
     historicalEntries: [],
-    todayEntries: []
+    todayEntries: [],
+    todaySchedule: [
+        { time: '08:00', text: 'Shift A Start' },
+        { time: '12:00', text: 'Lunch Break' },
+        { time: '13:00', text: 'Production Resume' },
+        { time: '20:00', text: 'Shift B Start' }
+    ],
+    announcements: [
+        { id: 'ann-1', text: 'New Tool Request workflow is now live.', date: 'May 26, 2025', type: 'bell' },
+        { id: 'ann-2', text: 'CNC-03 scheduled maintenance at 6 PM.', date: 'May 26, 2025', type: 'gear' },
+        { id: 'ann-3', text: 'Monthly Safety Meeting on Friday.', date: 'May 25, 2025', type: 'shield' }
+    ]
 };
 
 const subscribers = [];
@@ -92,3 +103,5 @@ Object.defineProperty(window, 'tools', { get: () => state.tools, set: (v) => app
 Object.defineProperty(window, 'toolRequests', { get: () => state.toolRequests, set: (v) => appStore.setState({ toolRequests: v }), configurable: true });
 Object.defineProperty(window, 'historicalEntries', { get: () => state.historicalEntries, set: (v) => appStore.setState({ historicalEntries: v }), configurable: true });
 Object.defineProperty(window, 'todayEntries', { get: () => state.todayEntries, set: (v) => appStore.setState({ todayEntries: v }), configurable: true });
+Object.defineProperty(window, 'todaySchedule', { get: () => state.todaySchedule, set: (v) => appStore.setState({ todaySchedule: v }), configurable: true });
+Object.defineProperty(window, 'announcements', { get: () => state.announcements, set: (v) => appStore.setState({ announcements: v }), configurable: true });

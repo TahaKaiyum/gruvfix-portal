@@ -187,8 +187,141 @@ function updateHomepageMetrics() {
         const dbCustomersCount = (typeof customers !== 'undefined' ? customers : []).length;
         custsEl.textContent = dbCustomersCount > 0 ? (dbCustomersCount + 11) : 14;
     }
+
+    renderHomepageSchedule();
+    renderHomepageAnnouncements();
 }
 window.updateHomepageMetrics = updateHomepageMetrics;
+
+function renderHomepageSchedule() {
+    const container = document.querySelector('#login-page .timeline-container');
+    if (!container) return;
+    
+    // Clear old items (keep the line)
+    container.innerHTML = '<div class="timeline-line"></div>';
+    
+    const sched = (typeof todaySchedule !== 'undefined' ? todaySchedule : []);
+    sched.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'timeline-item';
+        itemDiv.innerHTML = `
+            <span class="timeline-dot"></span>
+            <div>
+                <span class="timeline-time">${item.time}</span>
+                <p class="timeline-text">${item.text}</p>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+    });
+}
+window.renderHomepageSchedule = renderHomepageSchedule;
+
+function renderHomepageAnnouncements() {
+    const listEl = document.querySelector('#login-page .announcements-list');
+    if (!listEl) return;
+    
+    listEl.innerHTML = '';
+    
+    const annList = (typeof announcements !== 'undefined' ? announcements : []);
+    // Show only latest 3 on homepage
+    const displayAnn = annList.slice(0, 3);
+    
+    displayAnn.forEach(ann => {
+        let iconSvg = '';
+        if (ann.type === 'gear') {
+            iconSvg = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="ann-icon">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            `;
+        } else if (ann.type === 'shield') {
+            iconSvg = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="ann-icon">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            `;
+        } else {
+            iconSvg = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="ann-icon">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            `;
+        }
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'announcement-item';
+        itemDiv.innerHTML = `
+            <div class="ann-icon-circle">${iconSvg}</div>
+            <div>
+                <p class="ann-text">${ann.text}</p>
+                <span class="ann-date">${ann.date}</span>
+            </div>
+        `;
+        listEl.appendChild(itemDiv);
+    });
+}
+window.renderHomepageAnnouncements = renderHomepageAnnouncements;
+
+function openAllAnnouncementsModal(e) {
+    if (e) e.preventDefault();
+    
+    const container = document.getElementById('all-announcements-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const annList = (typeof announcements !== 'undefined' ? announcements : []);
+    
+    if (annList.length === 0) {
+        container.innerHTML = '<p style="font-size: 13px; color: var(--text-medium); text-align: center; margin: 20px 0;">No announcements posted.</p>';
+    } else {
+        annList.forEach(ann => {
+            let iconSvg = '';
+            if (ann.type === 'gear') {
+                iconSvg = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" class="ann-icon" style="width:14px; height:14px;">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                `;
+            } else if (ann.type === 'shield') {
+                iconSvg = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" class="ann-icon" style="width:14px; height:14px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                `;
+            } else {
+                iconSvg = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" class="ann-icon" style="width:14px; height:14px;">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                `;
+            }
+            
+            const div = document.createElement('div');
+            div.className = 'announcement-item';
+            div.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
+            div.style.paddingBottom = '12px';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.gap = '12px';
+            div.innerHTML = `
+                <div class="ann-icon-circle" style="background-color: rgba(5,150,105,0.1); width:28px; height:28px; border-radius:50%; display:flex; justify-content:center; align-items:center; flex-shrink:0;">${iconSvg}</div>
+                <div style="flex-grow: 1;">
+                    <p class="ann-text" style="color: var(--text-dark); font-weight: 600; font-size: 13px; margin: 0; text-align: left;">${ann.text}</p>
+                    <span class="ann-date" style="color: var(--text-medium); font-size: 11px; margin-top: 2px; display: block; text-align: left;">${ann.date}</span>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    if (typeof openModal === 'function') {
+        openModal('modal-all-announcements');
+    }
+}
+window.openAllAnnouncementsModal = openAllAnnouncementsModal;
 
 // ==========================================
 // 3. PERIODIC SHOP FLOOR TELEMETRY SIMULATOR

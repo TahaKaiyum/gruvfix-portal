@@ -12,7 +12,8 @@ const ROLE_ROUTES = {
         '#/admin/parts',
         '#/admin/all-entries',
         '#/admin/reports',
-        '#/admin/tool-requests'
+        '#/admin/tool-requests',
+        '#/admin/homepage-config'
     ],
     employee: [
         '#/operator',

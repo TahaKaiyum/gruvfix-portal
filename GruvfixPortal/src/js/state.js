@@ -264,13 +264,28 @@ async function syncFromSupabase() {
             .from('customers')
             .select('*');
         if (custErr) throw custErr;
-        customers = dbCustomers.map(c => ({
-            name: c.name,
-            code: c.code,
-            notes: c.notes,
-            contact: c.contact,
-            gst: c.gst
-        }));
+
+        // Extract settings config from special customer __SYSTEM_SETTINGS
+        const settingsRecord = dbCustomers.find(c => c.name === '__SYSTEM_SETTINGS');
+        if (settingsRecord) {
+            try {
+                const settingsObj = JSON.parse(settingsRecord.notes);
+                if (settingsObj.schedule) todaySchedule = settingsObj.schedule;
+                if (settingsObj.announcements) announcements = settingsObj.announcements;
+            } catch (e) {
+                console.error("Error decoding __SYSTEM_SETTINGS:", e);
+            }
+        }
+
+        customers = dbCustomers
+            .filter(c => c.name !== '__SYSTEM_SETTINGS')
+            .map(c => ({
+                name: c.name,
+                code: c.code,
+                notes: c.notes,
+                contact: c.contact,
+                gst: c.gst
+            }));
         
         // 3. Fetch Parts
         const { data: dbParts, error: partsErr } = await supabaseClient
@@ -512,11 +527,24 @@ async function dbDeleteTool(name) {
 }
 
 // Export functions for module imports
+async function dbSaveSystemSettings(schedule, annList) {
+    if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+        const notesStr = JSON.stringify({ schedule: schedule, announcements: annList });
+        await dbSaveCustomer({
+            name: '__SYSTEM_SETTINGS',
+            code: 'SETTINGS',
+            notes: notesStr,
+            contact: '',
+            gst: ''
+        });
+    }
+}
+
 export {
     getTodayDateString, getRelativeDateString, cascadeCustomerUpdate, cascadePartUpdate, cascadeEmployeeUpdate,
     showToast, openModal, closeModal, openLogDetailsModal, syncFromSupabase,
     dbSaveUser, dbDeleteUser, dbSaveCustomer, dbDeleteCustomer, dbSavePart, dbDeletePart,
-    dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbSaveTool, dbDeleteTool
+    dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbSaveTool, dbDeleteTool, dbSaveSystemSettings
 };
 
 // Bind all state functions to window
@@ -541,6 +569,7 @@ window.dbSaveLog = dbSaveLog;
 window.dbDeleteLog = dbDeleteLog;
 window.dbSaveTool = dbSaveTool;
 window.dbDeleteTool = dbDeleteTool;
+window.dbSaveSystemSettings = dbSaveSystemSettings;
 
 
 

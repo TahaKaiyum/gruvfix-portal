@@ -285,7 +285,7 @@
                                 </div>
                             </div>
 
-                            <a href="#" onclick="event.preventDefault(); alert('Redirecting to announcements...');" class="view-ann-link">View all announcements →</a>
+                            <a href="#" onclick="openAllAnnouncementsModal(event)" class="view-ann-link">View all announcements →</a>
                         </div>
                     </div>
 
@@ -758,6 +758,14 @@
                                 <line x1="6" y1="20" x2="6" y2="14"/>
                             </svg>
                             Reports
+                        </button>
+                        <button type="button" id="admin-menu-homepage-config" class="menu-item" onclick="switchAdminTab('homepage-config')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                            Homepage Config
                         </button>
                     </nav>
                 </div>
@@ -1356,6 +1364,75 @@
                     </div>
                 </div>
 
+                <!-- TAB: Homepage Config -->
+                <div id="admin-view-homepage-config" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">PORTAL CONFIGURATION</span>
+                            <h3>Homepage Settings</h3>
+                            <p class="description-text">Configure today's timeline schedule and post/remove portal announcements.</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;">
+                        <!-- Left Panel: Today's Schedule -->
+                        <div class="card" style="padding: 24px;">
+                            <h4 style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin: 0 0 16px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase;">Today's Schedule</h4>
+                            
+                            <!-- Add Event Form -->
+                            <form id="schedule-add-form" onsubmit="addScheduleEvent(event)" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box;">
+                                <div class="form-group" style="margin: 0; flex: 1;">
+                                    <label style="font-size: 10px; margin-bottom: 4px; font-weight: 700;">TIME</label>
+                                    <input type="text" id="sched-input-time" placeholder="e.g. 08:00" required style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; width: 100%; box-sizing: border-box;">
+                                </div>
+                                <div class="form-group" style="margin: 0; flex: 2;">
+                                    <label style="font-size: 10px; margin-bottom: 4px; font-weight: 700;">EVENT DESCRIPTION</label>
+                                    <input type="text" id="sched-input-text" placeholder="e.g. Shift A Start" required style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; width: 100%; box-sizing: border-box;">
+                                </div>
+                                <button type="submit" class="btn-save" style="padding: 0 16px; margin: 0; font-size: 13px; height: 37px; line-height: 37px; background-color: var(--primary-color); border: none; border-radius: 6px; color: white; font-weight: 700; cursor: pointer;">Add</button>
+                            </form>
+
+                            <!-- Events List -->
+                            <div id="admin-schedule-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; padding-right: 4px;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Announcements -->
+                        <div class="card" style="padding: 24px;">
+                            <h4 style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin: 0 0 16px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase;">Latest Announcements</h4>
+                            
+                            <!-- Add Announcement Form -->
+                            <form id="announcement-add-form" onsubmit="addAnnouncementEvent(event)" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box;">
+                                <div style="display: flex; gap: 10px; width: 100%;">
+                                    <div class="form-group" style="margin: 0; flex: 1;">
+                                        <label style="font-size: 10px; margin-bottom: 4px; font-weight: 700;">DATE</label>
+                                        <input type="text" id="ann-input-date" placeholder="e.g. May 26, 2025" required style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; width: 100%; box-sizing: border-box;">
+                                    </div>
+                                    <div class="form-group" style="margin: 0; flex: 1;">
+                                        <label style="font-size: 10px; margin-bottom: 4px; font-weight: 700;">ICON TYPE</label>
+                                        <select id="ann-input-type" required style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; height: 37px; background: #ffffff; width: 100%; box-sizing: border-box;">
+                                            <option value="bell">🔔 Bell (General)</option>
+                                            <option value="gear">⚙️ Gear (Maintenance)</option>
+                                            <option value="shield">🛡️ Shield (Safety)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin: 0; width: 100%;">
+                                    <label style="font-size: 10px; margin-bottom: 4px; font-weight: 700;">CONTENT</label>
+                                    <input type="text" id="ann-input-text" placeholder="e.g. New Tool Request workflow is now live." required style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; width: 100%; box-sizing: border-box;">
+                                </div>
+                                <button type="submit" class="btn-save" style="padding: 10px 16px; margin: 0; font-size: 13px; background-color: var(--primary-color); border: none; border-radius: 6px; color: white; font-weight: 700; cursor: pointer; width: 100%;">Post Announcement</button>
+                            </form>
+
+                            <!-- Announcements List -->
+                            <div id="admin-announcements-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; padding-right: 4px;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="react-root" style="display: none;"></div>
             </main>
         </div>
@@ -1636,6 +1713,24 @@
                     <button type="submit" class="btn-save">Submit Return</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- VIEW ALL ANNOUNCEMENTS MODAL -->
+    <div id="modal-all-announcements" class="modal-overlay">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>All Announcements</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-all-announcements')">×</button>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto; padding: 20px;">
+                <div id="all-announcements-list" class="announcements-list" style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Rendered announcements go here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-save" onclick="closeModal('modal-all-announcements')">Close</button>
+            </div>
         </div>
     </div>
 

@@ -40,7 +40,8 @@ function switchAdminTab(tabId) {
             'parts': 'Parts & Component Master',
             'tools': 'Tools & Inventory',
             'tool-requests': 'Tool Requests Control',
-            'reports': 'Performance Reports'
+            'reports': 'Performance Reports',
+            'homepage-config': 'Homepage Settings'
         };
         headerTitle.textContent = titles[tabId] || 'Admin Console';
     }
@@ -62,6 +63,8 @@ function switchAdminTab(tabId) {
     } else if (tabId === 'reports') {
         populateFilterDropdowns();
         renderReportsPreview();
+    } else if (tabId === 'homepage-config') {
+        renderHomepageConfig();
     }
 }
 
@@ -1517,8 +1520,187 @@ function populateFilterDropdowns() {
     });
 }
 
+
+// ==========================================
+// 8. HOMEPAGE CONFIGURATION MANAGER (ADMIN)
+// ==========================================
+
+function renderHomepageConfig() {
+    // 1. Render Schedule
+    const schedContainer = document.getElementById('admin-schedule-list');
+    if (schedContainer) {
+        schedContainer.innerHTML = '';
+        const sched = (typeof todaySchedule !== 'undefined' ? todaySchedule : []);
+        if (sched.length === 0) {
+            schedContainer.innerHTML = '<p style="font-size: 13px; color: var(--text-medium); text-align: center; margin: 20px 0;">No schedule events defined.</p>';
+        } else {
+            sched.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.padding = '8px 12px';
+                row.style.background = '#ffffff';
+                row.style.border = '1px solid #e2e8f0';
+                row.style.borderRadius = '6px';
+                row.style.marginBottom = '6px';
+                
+                row.innerHTML = `
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <span style="font-weight: 700; color: var(--primary-color); font-size: 13px;">${item.time}</span>
+                        <span style="font-size: 13px; color: var(--text-dark); font-weight: 600;">${item.text}</span>
+                    </div>
+                    <button type="button" class="btn-reset" onclick="deleteScheduleEvent(${index})" style="padding: 4px 8px; font-size: 11px; margin: 0; color: #ef4444; border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.05); cursor: pointer;">Remove</button>
+                `;
+                schedContainer.appendChild(row);
+            });
+        }
+    }
+
+    // 2. Render Announcements
+    const annContainer = document.getElementById('admin-announcements-list');
+    if (annContainer) {
+        annContainer.innerHTML = '';
+        const annList = (typeof announcements !== 'undefined' ? announcements : []);
+        if (annList.length === 0) {
+            annContainer.innerHTML = '<p style="font-size: 13px; color: var(--text-medium); text-align: center; margin: 20px 0;">No announcements posted.</p>';
+        } else {
+            annList.forEach((ann, index) => {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.padding = '10px 12px';
+                row.style.background = '#ffffff';
+                row.style.border = '1px solid #e2e8f0';
+                row.style.borderRadius = '6px';
+                row.style.marginBottom = '6px';
+
+                let badgeColor = 'rgba(16, 185, 129, 0.15)';
+                let badgeText = ann.type.toUpperCase();
+                
+                row.innerHTML = `
+                    <div style="flex-grow: 1; margin-right: 12px;">
+                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                            <span style="background: ${badgeColor}; color: #059669; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">${badgeText}</span>
+                            <span style="font-size: 10px; color: var(--text-medium);">${ann.date}</span>
+                        </div>
+                        <p style="font-size: 12.5px; color: var(--text-dark); margin: 0; font-weight: 600; text-align: left;">${ann.text}</p>
+                    </div>
+                    <button type="button" class="btn-reset" onclick="deleteAnnouncementEvent(${index})" style="padding: 4px 8px; font-size: 11px; margin: 0; color: #ef4444; border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.05); flex-shrink: 0; cursor: pointer;">Remove</button>
+                `;
+                annContainer.appendChild(row);
+            });
+        }
+    }
+
+    // Prefill date input with today's date (formatted e.g. May 26, 2025)
+    const dateInput = document.getElementById('ann-input-date');
+    if (dateInput && !dateInput.value) {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const today = new Date();
+        dateInput.value = `${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`;
+    }
+}
+
+async function addScheduleEvent(e) {
+    if (e) e.preventDefault();
+    const timeVal = document.getElementById('sched-input-time').value.trim();
+    const textVal = document.getElementById('sched-input-text').value.trim();
+    
+    if (!timeVal || !textVal) return;
+    
+    const sched = [...todaySchedule];
+    sched.push({ time: timeVal, text: textVal });
+    // Sort schedule by time
+    sched.sort((a, b) => a.time.localeCompare(b.time));
+    
+    todaySchedule = sched;
+    
+    try {
+        await dbSaveSystemSettings(todaySchedule, announcements);
+        showToast("Schedule event added successfully!", "success");
+        document.getElementById('sched-input-time').value = '';
+        document.getElementById('sched-input-text').value = '';
+        renderHomepageConfig();
+        if (typeof updateHomepageMetrics === 'function') updateHomepageMetrics();
+    } catch (err) {
+        console.error("Error saving schedule:", err);
+        showToast("Failed to save schedule to database.", "error");
+    }
+}
+
+async function deleteScheduleEvent(index) {
+    const sched = [...todaySchedule];
+    sched.splice(index, 1);
+    todaySchedule = sched;
+    
+    try {
+        await dbSaveSystemSettings(todaySchedule, announcements);
+        showToast("Schedule event removed.", "success");
+        renderHomepageConfig();
+        if (typeof updateHomepageMetrics === 'function') updateHomepageMetrics();
+    } catch (err) {
+        console.error("Error deleting schedule event:", err);
+        showToast("Failed to update database.", "error");
+    }
+}
+
+async function addAnnouncementEvent(e) {
+    if (e) e.preventDefault();
+    const dateVal = document.getElementById('ann-input-date').value.trim();
+    const typeVal = document.getElementById('ann-input-type').value;
+    const textVal = document.getElementById('ann-input-text').value.trim();
+    
+    if (!dateVal || !textVal) return;
+    
+    const list = [...announcements];
+    list.unshift({
+        id: 'ann-' + Date.now(),
+        date: dateVal,
+        type: typeVal,
+        text: textVal
+    });
+    
+    announcements = list;
+    
+    try {
+        await dbSaveSystemSettings(todaySchedule, announcements);
+        showToast("Announcement posted successfully!", "success");
+        document.getElementById('ann-input-text').value = '';
+        renderHomepageConfig();
+        if (typeof updateHomepageMetrics === 'function') updateHomepageMetrics();
+    } catch (err) {
+        console.error("Error posting announcement:", err);
+        showToast("Failed to save announcement to database.", "error");
+    }
+}
+
+async function deleteAnnouncementEvent(index) {
+    const list = [...announcements];
+    list.splice(index, 1);
+    announcements = list;
+    
+    try {
+        await dbSaveSystemSettings(todaySchedule, announcements);
+        showToast("Announcement removed.", "success");
+        renderHomepageConfig();
+        if (typeof updateHomepageMetrics === 'function') updateHomepageMetrics();
+    } catch (err) {
+        console.error("Error deleting announcement:", err);
+        showToast("Failed to update database.", "error");
+    }
+}
+
+window.renderHomepageConfig = renderHomepageConfig;
+window.addScheduleEvent = addScheduleEvent;
+window.deleteScheduleEvent = deleteScheduleEvent;
+window.addAnnouncementEvent = addAnnouncementEvent;
+window.deleteAnnouncementEvent = deleteAnnouncementEvent;
+
 // Export functions for ESM imports
 export {
+    renderHomepageConfig, addScheduleEvent, deleteScheduleEvent, addAnnouncementEvent, deleteAnnouncementEvent,
     switchAdminTab, updateAdminDashboard, renderTrendChart, renderShiftChart,
     getFilteredAdminEntries, renderAdminEntriesTable, filterAdminEntries, resetAdminFilters,
     deleteAdminEntry, updateEntryStatus, renderUsersTable, openAddUserModal,
