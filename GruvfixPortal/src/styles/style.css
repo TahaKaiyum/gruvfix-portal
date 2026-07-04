@@ -2489,7 +2489,8 @@ input:checked + .slider-toggle:before {
     width: 40%;
     background-color: #ffffff;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
     align-items: center;
     padding: 60px 40px;
     box-sizing: border-box;
@@ -2501,6 +2502,7 @@ input:checked + .slider-toggle:before {
     max-width: 400px;
     display: flex;
     flex-direction: column;
+    margin: auto 0;
 }
 
 .login-side .logo-box {
