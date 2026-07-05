@@ -281,8 +281,28 @@ async function syncFromSupabase() {
             }
         }
 
+        // Extract machines list from special customer __MACHINES
+        const machinesRecord = dbCustomers.find(c => c.name === '__MACHINES');
+        if (machinesRecord && machinesRecord.notes) {
+            try {
+                machines = JSON.parse(machinesRecord.notes);
+            } catch (e) {
+                console.error("Error decoding __MACHINES:", e);
+                machines = [];
+            }
+        } else {
+            // Seed default machines if not present in db
+            machines = [
+                { id: 'mach-1', name: 'CNC-01', condition: 'Good', yearsOfUse: 2 },
+                { id: 'mach-2', name: 'CNC-02', condition: 'Good', yearsOfUse: 3 },
+                { id: 'mach-3', name: 'CNC-03', condition: 'OK', yearsOfUse: 5 },
+                { id: 'mach-4', name: 'PNS-01', condition: 'Good', yearsOfUse: 1 },
+                { id: 'mach-5', name: 'MLD-02', condition: 'Good', yearsOfUse: 2 }
+            ];
+        }
+
         customers = dbCustomers
-            .filter(c => c.name !== '__SYSTEM_SETTINGS')
+            .filter(c => c.name !== '__SYSTEM_SETTINGS' && c.name !== '__MACHINES')
             .map(c => ({
                 name: c.name,
                 code: c.code,
@@ -562,11 +582,24 @@ async function dbSaveSystemSettings(schedule, annList) {
     }
 }
 
+async function dbSaveMachines(machinesList) {
+    if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+        await dbSaveCustomer({
+            name: '__MACHINES',
+            code: 'MACHINES',
+            notes: JSON.stringify(machinesList),
+            contact: '',
+            gst: ''
+        });
+    }
+}
+
 export {
     getTodayDateString, getRelativeDateString, cascadeCustomerUpdate, cascadePartUpdate, cascadeEmployeeUpdate,
     showToast, openModal, closeModal, openLogDetailsModal, syncFromSupabase,
     dbSaveUser, dbDeleteUser, dbSaveCustomer, dbDeleteCustomer, dbSavePart, dbDeletePart,
-    dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbDeleteAllTodayLogs, dbSaveTool, dbDeleteTool, dbSaveSystemSettings
+    dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbDeleteAllTodayLogs, dbSaveTool, dbDeleteTool, dbSaveSystemSettings,
+    dbSaveMachines
 };
 
 // Bind all state functions to window
@@ -593,3 +626,4 @@ window.dbDeleteAllTodayLogs = dbDeleteAllTodayLogs;
 window.dbSaveTool = dbSaveTool;
 window.dbDeleteTool = dbDeleteTool;
 window.dbSaveSystemSettings = dbSaveSystemSettings;
+window.dbSaveMachines = dbSaveMachines;

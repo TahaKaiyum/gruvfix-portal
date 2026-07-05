@@ -39,6 +39,7 @@ function switchAdminTab(tabId) {
             'customers': 'Customer Directory',
             'parts': 'Parts & Component Master',
             'tools': 'Tools & Inventory',
+            'machines': 'Machines Equipment Master',
             'tool-requests': 'Tool Requests Control',
             'reports': 'Performance Reports',
             'homepage-config': 'Homepage Settings'
@@ -58,6 +59,8 @@ function switchAdminTab(tabId) {
         renderPartsTable();
     } else if (tabId === 'tools') {
         renderToolsTable();
+    } else if (tabId === 'machines') {
+        renderMachinesTable();
     } else if (tabId === 'tool-requests') {
         renderAdminToolRequestsTable();
     } else if (tabId === 'reports') {
@@ -1261,6 +1264,197 @@ async function deletePart(index) {
 }
 
 // ==========================================
+// 6b. MASTER DATA: MACHINES CRUD
+// ==========================================
+
+function renderMachinesTable() {
+    const tbody = document.getElementById('admin-machines-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const searchInput = document.getElementById('admin-search-machines');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    const filtered = (typeof machines !== 'undefined' ? machines : []).filter(m => 
+        m.name.toLowerCase().includes(query) || 
+        m.condition.toLowerCase().includes(query)
+    );
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="empty-table-state">No machines found.</td></tr>`;
+        return;
+    }
+    
+    filtered.forEach((mach) => {
+        const tr = document.createElement('tr');
+        
+        // Find index in global machines array
+        const mainIndex = machines.findIndex(m => m.id === mach.id);
+        
+        const editIcon = `
+            <button type="button" class="btn-edit-entry" onclick="openEditMachineModal(${mainIndex})" title="Edit machine" style="background: none; border: none; padding: 6px; cursor: pointer; color: #4b5563; transition: color 0.15s;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+            </button>
+        `;
+        const deleteIcon = `
+            <button type="button" class="btn-delete-entry" onclick="deleteMachine(${mainIndex})" title="Delete machine" style="background: none; border: none; padding: 6px; cursor: pointer; color: #b91c1c; transition: color 0.15s;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+            </button>
+        `;
+        
+        tr.innerHTML = `
+            <td><strong>${mach.name}</strong></td>
+            <td><span class="status-badge" style="background-color: ${getConditionBg(mach.condition)}; color: ${getConditionColor(mach.condition)}; border: 1px solid ${getConditionBorder(mach.condition)}; padding: 4px 10px; font-size: 11px; font-weight: 600;">${mach.condition}</span></td>
+            <td>${mach.yearsOfUse} years</td>
+            <td style="text-align: right;">${editIcon}${deleteIcon}</td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+}
+
+function getConditionBg(cond) {
+    if (cond === 'Good') return '#dcfce7';
+    if (cond === 'OK') return '#fef3c7';
+    if (cond === 'Needs Service') return '#ffedd5';
+    return '#fee2e2'; // Broken
+}
+function getConditionColor(cond) {
+    if (cond === 'Good') return '#10b981';
+    if (cond === 'OK') return '#d97706';
+    if (cond === 'Needs Service') return '#ea580c';
+    return '#b91c1c';
+}
+function getConditionBorder(cond) {
+    if (cond === 'Good') return '#bbf7d0';
+    if (cond === 'OK') return '#fde68a';
+    if (cond === 'Needs Service') return '#fed7aa';
+    return '#fca5a5';
+}
+
+function openAddMachineModal() {
+    const title = document.getElementById('modal-machine-title');
+    if (title) title.textContent = 'Add New Machine';
+    
+    const idInput = document.getElementById('modal-machine-id');
+    if (idInput) idInput.value = '';
+    
+    const nameInput = document.getElementById('modal-machine-name');
+    if (nameInput) nameInput.value = '';
+    
+    const condInput = document.getElementById('modal-machine-condition');
+    if (condInput) condInput.value = 'Good';
+    
+    const yearsInput = document.getElementById('modal-machine-years');
+    if (yearsInput) yearsInput.value = '';
+    
+    openModal('modal-machine');
+}
+
+function openEditMachineModal(index) {
+    const mach = machines[index];
+    if (!mach) return;
+    
+    const title = document.getElementById('modal-machine-title');
+    if (title) title.textContent = 'Edit Machine';
+    
+    const idInput = document.getElementById('modal-machine-id');
+    if (idInput) idInput.value = index;
+    
+    const nameInput = document.getElementById('modal-machine-name');
+    if (nameInput) nameInput.value = mach.name;
+    
+    const condInput = document.getElementById('modal-machine-condition');
+    if (condInput) condInput.value = mach.condition;
+    
+    const yearsInput = document.getElementById('modal-machine-years');
+    if (yearsInput) yearsInput.value = mach.yearsOfUse;
+    
+    openModal('modal-machine');
+}
+
+async function saveMachineModal(e) {
+    e.preventDefault();
+    
+    const idInput = document.getElementById('modal-machine-id');
+    const nameInput = document.getElementById('modal-machine-name');
+    const condInput = document.getElementById('modal-machine-condition');
+    const yearsInput = document.getElementById('modal-machine-years');
+    
+    const indexStr = idInput ? idInput.value : '';
+    const name = nameInput ? nameInput.value.trim() : '';
+    const condition = condInput ? condInput.value : 'Good';
+    const yearsOfUse = yearsInput ? parseInt(yearsInput.value) || 0 : 0;
+    
+    if (!name) {
+        showToast('Machine name is required.', 'error');
+        return;
+    }
+    
+    const newMach = {
+        id: indexStr !== '' ? machines[parseInt(indexStr)].id : 'mach-' + Date.now(),
+        name,
+        condition,
+        yearsOfUse
+    };
+    
+    let updatedMachines = [...machines];
+    if (indexStr !== '') {
+        updatedMachines[parseInt(indexStr)] = newMach;
+    } else {
+        updatedMachines.push(newMach);
+    }
+    
+    if (typeof window.dbSaveMachines !== 'undefined' && window.supabaseClient) {
+        try {
+            await window.dbSaveMachines(updatedMachines);
+            await window.syncFromSupabase();
+        } catch (err) {
+            console.error("Error saving machine:", err);
+            showToast("Failed to save machine to database.", "error");
+            return;
+        }
+    } else {
+        machines = updatedMachines;
+    }
+    
+    showToast(indexStr !== '' ? 'Machine updated successfully.' : 'Machine added successfully.');
+    closeModal('modal-machine');
+    renderMachinesTable();
+}
+
+async function deleteMachine(index) {
+    const mach = machines[index];
+    if (!mach) return;
+    
+    if (confirm(`Are you sure you want to permanently delete machine "${mach.name}"?`)) {
+        let updatedMachines = machines.filter((_, i) => i !== index);
+        
+        if (typeof window.dbSaveMachines !== 'undefined' && window.supabaseClient) {
+            try {
+                await window.dbSaveMachines(updatedMachines);
+                await window.syncFromSupabase();
+            } catch (err) {
+                console.error("Error deleting machine:", err);
+                showToast("Failed to delete machine from database.", "error");
+                return;
+            }
+        } else {
+            machines = updatedMachines;
+        }
+        
+        showToast(`Machine "${mach.name}" deleted.`);
+        renderMachinesTable();
+    }
+}
+
+// ==========================================
 // 7. PERFORMANCE REPORTS ENGINE
 // ==========================================
 
@@ -1710,7 +1904,8 @@ export {
     toggleCustomerSort, changeCustomerPage,
     renderPartsTable, openAddPartModal, openEditPartModal, savePartModal, deletePart,
     getFilteredReports, renderReportsPreview, hookReportFilters, downloadCSV, exportReport,
-    populateFilterDropdowns
+    populateFilterDropdowns,
+    renderMachinesTable, openAddMachineModal, openEditMachineModal, saveMachineModal, deleteMachine
 };
 
 // Bind functions to window for backward compatibility
@@ -1728,7 +1923,7 @@ window.renderUsersTable = renderUsersTable;
 window.openAddUserModal = openAddUserModal;
 window.openEditUserModal = openEditUserModal;
 window.toggleUserModalFields = toggleUserModalFields;
-window.saveUserModal = saveUserModal;
+window.saveUserModal = window.saveUserModal || saveUserModal; // Safe check
 window.toggleUserActiveStatus = toggleUserActiveStatus;
 window.deleteUser = deleteUser;
 window.toggleUserSort = toggleUserSort;
@@ -1751,6 +1946,11 @@ window.hookReportFilters = hookReportFilters;
 window.downloadCSV = downloadCSV;
 window.exportReport = exportReport;
 window.populateFilterDropdowns = populateFilterDropdowns;
+window.renderMachinesTable = renderMachinesTable;
+window.openAddMachineModal = openAddMachineModal;
+window.openEditMachineModal = openEditMachineModal;
+window.saveMachineModal = saveMachineModal;
+window.deleteMachine = deleteMachine;
 
 
 

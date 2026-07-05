@@ -32,7 +32,8 @@ let state = {
         { id: 'ann-1', text: 'New Tool Request workflow is now live.', date: 'May 26, 2025', type: 'bell' },
         { id: 'ann-2', text: 'CNC-03 scheduled maintenance at 6 PM.', date: 'May 26, 2025', type: 'gear' },
         { id: 'ann-3', text: 'Monthly Safety Meeting on Friday.', date: 'May 25, 2025', type: 'shield' }
-    ]
+    ],
+    machines: []
 };
 
 const subscribers = [];
@@ -105,3 +106,4 @@ Object.defineProperty(window, 'historicalEntries', { get: () => state.historical
 Object.defineProperty(window, 'todayEntries', { get: () => state.todayEntries, set: (v) => appStore.setState({ todayEntries: v }), configurable: true });
 Object.defineProperty(window, 'todaySchedule', { get: () => state.todaySchedule, set: (v) => appStore.setState({ todaySchedule: v }), configurable: true });
 Object.defineProperty(window, 'announcements', { get: () => state.announcements, set: (v) => appStore.setState({ announcements: v }), configurable: true });
+Object.defineProperty(window, 'machines', { get: () => state.machines, set: (v) => appStore.setState({ machines: v }), configurable: true });
