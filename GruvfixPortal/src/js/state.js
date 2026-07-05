@@ -23,29 +23,33 @@ function encodeCondition(strVal) {
     return 100; // 'Good'
 }
 
-// Helper to decode status from requirements (to bypass db constraints)
+// Helper to decode status and broken reason from requirements (to bypass db constraints)
 function decodeStatusFromRequirements(dbRequirements, dbStatus) {
     if (!dbRequirements) {
         return {
             requirements: '',
-            status: dbStatus === 'Requested' ? 'Approved' : dbStatus
+            status: dbStatus === 'Requested' ? 'Approved' : dbStatus,
+            brokenReason: null
         };
     }
-    const match = dbRequirements.match(/\n__status:\s*([^\n]+)$/);
-    if (match) {
-        const status = match[1].trim();
-        const requirements = dbRequirements.replace(/\n__status:\s*[^\n]+$/, '');
-        return { requirements, status };
-    } else {
-        let mappedStatus = dbStatus;
-        if (dbStatus === 'Requested') {
-            mappedStatus = 'Approved';
-        }
-        return {
-            requirements: dbRequirements,
-            status: mappedStatus
-        };
+    
+    let status = dbStatus === 'Requested' ? 'Approved' : dbStatus;
+    let requirements = dbRequirements;
+    let brokenReason = null;
+    
+    const statusMatch = requirements.match(/\n__status:\s*([^\n]+)$/);
+    if (statusMatch) {
+        status = statusMatch[1].trim();
+        requirements = requirements.replace(/\n__status:\s*[^\n]+$/, '');
     }
+    
+    const reasonMatch = requirements.match(/\n__broken_reason:\s*([\s\S]+)$/);
+    if (reasonMatch) {
+        brokenReason = reasonMatch[1].trim();
+        requirements = requirements.replace(/\n__broken_reason:\s*[\s\S]+$/, '');
+    }
+    
+    return { requirements, status, brokenReason };
 }
 
 // ==========================================
@@ -320,7 +324,7 @@ async function syncFromSupabase() {
             .select('*');
         if (reqErr) throw reqErr;
         toolRequests = dbRequests.map(r => {
-            const { requirements, status } = decodeStatusFromRequirements(r.requirements, r.status);
+            const { requirements, status, brokenReason } = decodeStatusFromRequirements(r.requirements, r.status);
             return {
                 id: r.id,
                 employeeId: r.employee_id,
@@ -329,7 +333,8 @@ async function syncFromSupabase() {
                 toolName: r.tool_name,
                 requirements: requirements,
                 status: status,
-                conditionOnClose: r.condition_on_close !== null ? decodeCondition(r.condition_on_close) : null
+                conditionOnClose: r.condition_on_close !== null ? decodeCondition(r.condition_on_close) : null,
+                brokenReason: brokenReason || null
             };
         });
         
@@ -450,9 +455,16 @@ async function dbSaveToolRequest(reqObj) {
         dbStatus = 'Closed';
     }
     
-    // Encode the rich JS status inside requirements field
-    const cleanRequirements = (reqObj.requirements || '').replace(/\n__status:[\s\S]*$/, '');
-    const dbRequirements = cleanRequirements + `\n__status: ${reqObj.status}`;
+    // Encode the rich JS status and broken reason inside requirements field
+    const cleanRequirements = (reqObj.requirements || '')
+        .replace(/\n__status:[\s\S]*$/, '')
+        .replace(/\n__broken_reason:[\s\S]*$/, '');
+    
+    let dbRequirements = cleanRequirements;
+    if (reqObj.brokenReason) {
+        dbRequirements += `\n__broken_reason: ${reqObj.brokenReason}`;
+    }
+    dbRequirements += `\n__status: ${reqObj.status}`;
     
     const { error } = await supabaseClient
         .from('tool_requests')
