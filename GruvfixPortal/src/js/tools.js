@@ -432,7 +432,32 @@ function openReturnToolModal(reqId) {
     const condInput = document.getElementById('modal-return-condition');
     if (condInput) condInput.value = 'Good';
     
+    const reasonGroup = document.getElementById('group-return-reason');
+    if (reasonGroup) reasonGroup.style.display = 'none';
+    
+    const reasonInput = document.getElementById('modal-return-reason');
+    if (reasonInput) {
+        reasonInput.value = '';
+        reasonInput.removeAttribute('required');
+    }
+    
     openModal('modal-return-tool');
+}
+
+function handleReturnConditionChange() {
+    const condInput = document.getElementById('modal-return-condition');
+    const reasonGroup = document.getElementById('group-return-reason');
+    const reasonInput = document.getElementById('modal-return-reason');
+    if (condInput && reasonGroup && reasonInput) {
+        if (condInput.value === 'Broken') {
+            reasonGroup.style.display = 'block';
+            reasonInput.setAttribute('required', 'true');
+        } else {
+            reasonGroup.style.display = 'none';
+            reasonInput.removeAttribute('required');
+            reasonInput.value = '';
+        }
+    }
 }
 
 async function submitReturnTool(e) {
@@ -440,33 +465,37 @@ async function submitReturnTool(e) {
     
     const idInput = document.getElementById('modal-return-req-id');
     const condInput = document.getElementById('modal-return-condition');
+    const reasonInput = document.getElementById('modal-return-reason');
     
     const reqId = idInput ? idInput.value : '';
     const condition = condInput ? condInput.value : 'Good';
+    const brokenReason = (condition === 'Broken' && reasonInput) ? reasonInput.value.trim() : null;
     
     const req = toolRequests.find(r => r.id === reqId);
     if (req) {
         const updatedReq = {
             ...req,
             status: 'Pending Close',
-            conditionOnClose: condition
+            conditionOnClose: condition,
+            brokenReason: brokenReason
         };
         
-        if (typeof dbSaveToolRequest !== 'undefined' && supabaseClient) {
+        if (typeof window.dbSaveToolRequest !== 'undefined' && window.supabaseClient) {
             try {
-                await dbSaveToolRequest(updatedReq);
-                await syncFromSupabase();
+                await window.dbSaveToolRequest(updatedReq);
+                await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error saving return request:", err);
-                showToast("Failed to submit return request to database.", "error");
+                window.showToast("Failed to submit return request to database.", "error");
                 return;
             }
         } else {
             req.status = 'Pending Close';
             req.conditionOnClose = condition;
+            req.brokenReason = brokenReason;
             toolRequests = [...toolRequests];
         }
-        showToast('Return submitted. Tool work is over and pending admin closure.');
+        window.showToast('Return submitted. Tool work is over and pending admin closure.');
     }
     
     closeModal('modal-return-tool');
@@ -514,16 +543,21 @@ function renderAdminToolRequestsTable() {
             let condColor = '#10b981'; // green (Good)
             let condBg = '#dcfce7';
             let condBorder = '#bbf7d0';
+            let reasonHtml = '';
+            
             if (req.conditionOnClose === 'Broken') {
                 condColor = '#b91c1c';
                 condBg = '#fee2e2';
                 condBorder = '#fca5a5';
+                if (req.brokenReason) {
+                    reasonHtml = `<div style="font-size: 11px; color: #b91c1c; margin-top: 4px; font-weight: 500; max-width: 150px; white-space: normal; line-height: 1.3;">Reason: ${req.brokenReason}</div>`;
+                }
             } else if (req.conditionOnClose === 'OK') {
                 condColor = '#d97706';
                 condBg = '#fef3c7';
                 condBorder = '#fde68a';
             }
-            returnCond = `<span class="status-badge" style="background-color: ${condBg}; color: ${condColor}; border: 1px solid ${condBorder}; padding: 4px 10px; font-size: 11px; font-weight: 600;">${req.conditionOnClose}</span>`;
+            returnCond = `<span class="status-badge" style="background-color: ${condBg}; color: ${condColor}; border: 1px solid ${condBorder}; padding: 4px 10px; font-size: 11px; font-weight: 600;">${req.conditionOnClose}</span>${reasonHtml}`;
         }
         
         tr.innerHTML = `
@@ -603,8 +637,13 @@ async function approveToolReturn(reqId) {
     const req = toolRequests.find(r => r.id === reqId);
     if (!req) return;
     
-    // Confirm closure
-    if (confirm(`Approve return of "${req.toolName}" from ${req.employeeName} and mark request as closed?`)) {
+    // Confirm closure with conditional breakdown reason
+    let confirmMsg = `Approve return of "${req.toolName}" from ${req.employeeName} and mark request as closed?`;
+    if (req.conditionOnClose === 'Broken' && req.brokenReason) {
+        confirmMsg += `\n\n⚠️ NOTE: This tool was returned as BROKEN.\nReason: "${req.brokenReason}"`;
+    }
+    
+    if (confirm(confirmMsg)) {
         const updatedReq = {
             ...req,
             status: 'Closed'
@@ -659,7 +698,7 @@ async function approveToolReturn(reqId) {
 export {
     renderToolsTable, openAddToolModal, openEditToolModal, saveToolModal, deleteTool,
     exportToolsToExcel, renderEmployeeToolRequests, handleCustomerSelectChange,
-    submitToolRequest, openReturnToolModal, submitReturnTool,
+    submitToolRequest, openReturnToolModal, handleReturnConditionChange, submitReturnTool,
     renderAdminToolRequestsTable, approveToolReturn, processToolRequestApproval
 };
 
@@ -674,6 +713,7 @@ window.renderEmployeeToolRequests = renderEmployeeToolRequests;
 window.handleCustomerSelectChange = handleCustomerSelectChange;
 window.submitToolRequest = submitToolRequest;
 window.openReturnToolModal = openReturnToolModal;
+window.handleReturnConditionChange = handleReturnConditionChange;
 window.submitReturnTool = submitReturnTool;
 window.renderAdminToolRequestsTable = renderAdminToolRequestsTable;
 window.approveToolReturn = approveToolReturn;

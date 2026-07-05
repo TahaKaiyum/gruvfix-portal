@@ -1709,11 +1709,16 @@
                     </p>
                     <div class="form-group" style="margin-bottom: 16px;">
                         <label>TOOL CONDITION</label>
-                        <select id="modal-return-condition" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-white); color: var(--text-dark);">
+                        <select id="modal-return-condition" required onchange="handleReturnConditionChange()" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-white); color: var(--text-dark);">
                             <option value="Good">Good</option>
                             <option value="OK">OK</option>
                             <option value="Broken">Broken</option>
                         </select>
+                    </div>
+                    <!-- Conditionally shown breakdown reason -->
+                    <div id="group-return-reason" class="form-group" style="display: none; margin-bottom: 16px;">
+                        <label>REASON WHY & HOW IT BROKE</label>
+                        <textarea id="modal-return-reason" placeholder="Explain how and why the tool broke..." style="width: 100%; height: 80px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-white); color: var(--text-dark); font-family: var(--font-sans); font-size: 13.5px; resize: vertical; box-sizing: border-box;"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
