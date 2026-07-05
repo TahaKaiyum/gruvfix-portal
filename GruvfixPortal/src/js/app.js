@@ -167,29 +167,62 @@ function updateHomepageMetrics() {
     const opsEl = document.getElementById('snap-metric-operators');
     const reqsEl = document.getElementById('snap-metric-tool-reqs');
     const custsEl = document.getElementById('snap-metric-customers');
+    const machsEl = document.getElementById('snap-metric-machines');
+    const effEl = document.getElementById('snap-metric-efficiency');
     
+    const todayStr = window.getTodayDateString ? window.getTodayDateString() : new Date().toISOString().split('T')[0];
+    
+    // 1. Today's Parts Produced
+    let todayParts = 0;
     if (partsEl) {
-        const todayStr = new Date().toLocaleDateString('en-CA');
-        const dbTodayParts = (typeof historicalEntries !== 'undefined' ? historicalEntries : [])
-            .filter(e => e.date === todayStr)
+        todayParts = (typeof window.historicalEntries !== 'undefined' ? window.historicalEntries : [])
+            .filter(e => {
+                if (!e.date) return false;
+                return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim();
+            })
             .reduce((sum, e) => sum + (parseInt(e.qty) || 0), 0);
-        
-        const baseParts = dbTodayParts > 0 ? dbTodayParts : 1286;
-        partsEl.textContent = (baseParts + (shiftPartsCount - 284)).toLocaleString();
+        partsEl.textContent = todayParts.toLocaleString();
     }
+    
+    // 2. Active Operators on Floor
     if (opsEl) {
-        const dbActiveOps = (typeof users !== 'undefined' ? users : [])
-            .filter(u => u.role === 'employee' && u.active).length;
-        opsEl.textContent = dbActiveOps > 0 ? (dbActiveOps + 27) : 31;
+        const activeOps = (typeof window.users !== 'undefined' ? window.users : [])
+            .filter(u => u.role === 'employee' && u.active === true).length;
+        opsEl.textContent = activeOps.toLocaleString();
     }
+    
+    // 3. Open Tool Requests Pending Action
     if (reqsEl) {
-        const pendingRequests = (typeof toolRequests !== 'undefined' ? toolRequests : [])
-            .filter(r => r.status === 'Pending Approval').length;
-        reqsEl.textContent = pendingRequests;
+        const pendingRequests = (typeof window.toolRequests !== 'undefined' ? window.toolRequests : [])
+            .filter(r => r.status === 'Pending Approval' || r.status === 'Pending Close').length;
+        reqsEl.textContent = pendingRequests.toLocaleString();
     }
+    
+    // 4. Active Customers (excluding system configuration metadata row)
     if (custsEl) {
-        const dbCustomersCount = (typeof customers !== 'undefined' ? customers : []).length;
-        custsEl.textContent = dbCustomersCount > 0 ? (dbCustomersCount + 11) : 14;
+        const activeCusts = (typeof window.customers !== 'undefined' ? window.customers : [])
+            .filter(c => c.name !== '__SYSTEM_SETTINGS').length;
+        custsEl.textContent = activeCusts.toLocaleString();
+    }
+
+    // 5. Machines Running Live Today
+    if (machsEl) {
+        const runningMachines = new Set(
+            (typeof window.historicalEntries !== 'undefined' ? window.historicalEntries : [])
+                .filter(e => {
+                    if (!e.date) return false;
+                    return e.date.split('T')[0].trim() === todayStr.split('T')[0].trim();
+                })
+                .map(e => e.machine)
+                .filter(m => m && m !== '—')
+        );
+        machsEl.textContent = runningMachines.size.toLocaleString();
+    }
+
+    // 6. Today's Efficiency (based on 350 standard daily parts target)
+    if (effEl) {
+        const efficiency = todayParts > 0 ? Math.min(100, Math.round((todayParts / 350) * 1000) / 10) : 0;
+        effEl.textContent = `${efficiency}%`;
     }
 
     renderHomepageSchedule();
