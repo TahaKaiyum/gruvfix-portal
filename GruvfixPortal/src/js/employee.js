@@ -72,6 +72,11 @@ function addPartRow() {
     rowDiv.className = 'part-row';
     rowDiv.id = `part-row-${rowId}`;
 
+    const machList = (typeof machines !== 'undefined' && machines.length > 0) ? machines : [
+        { name: 'CNC-01' }, { name: 'CNC-02' }, { name: 'CNC-03' }, { name: 'PNS-01' }, { name: 'MLD-02' }
+    ];
+    const machOptions = machList.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+
     rowDiv.innerHTML = `
         <div class="col-part">
             <div class="custom-dropdown" id="part-dropdown-${rowId}">
@@ -140,7 +145,9 @@ function addPartRow() {
             <input type="number" id="qty-input-${rowId}" value="1" min="1" oninput="handleQtyChange(${rowId})" required>
         </div>
         <div class="col-mach">
-            <input type="text" id="mach-input-${rowId}" value="CNC-03" required>
+            <select id="mach-select-${rowId}" required>
+                ${machOptions}
+            </select>
         </div>
         <div class="col-status">
             <select id="status-select-${rowId}" required>
@@ -327,7 +334,7 @@ async function saveWorkEntries(e) {
         const rowCust = row.customer;
         const rowPart = row.partNo;
         const process = document.getElementById(`proc-select-${row.id}`).value;
-        const machine = document.getElementById(`mach-input-${row.id}`).value;
+        const machine = document.getElementById(`mach-select-${row.id}`).value;
         const status = document.getElementById(`status-select-${row.id}`).value;
         const qtyVal = parseInt(document.getElementById(`qty-input-${row.id}`).value) || 1;
         
