@@ -740,6 +740,13 @@
                             </svg>
                             Tools & Inventory
                         </button>
+                        <button type="button" id="admin-menu-machines" class="menu-item" onclick="switchAdminTab('machines')">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            </svg>
+                            Machines
+                        </button>
                         <button type="button" id="admin-menu-tool-requests" class="menu-item" onclick="switchAdminTab('tool-requests')">
                             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -1211,6 +1218,42 @@
                     </div>
                 </div>
 
+                <!-- TAB: Machines -->
+                <div id="admin-view-machines" class="tab-view">
+                    <div class="view-header-row">
+                        <div class="title-block">
+                            <span class="subtitle-logging">EQUIPMENT DATA</span>
+                            <h3>Machines</h3>
+                        </div>
+                        <div class="header-action-row-horizontal">
+                            <input type="text" id="admin-search-machines" class="table-search-input" placeholder="Search machines..." oninput="renderMachinesTable()">
+                            <button type="button" class="btn-add-user-header" onclick="openAddMachineModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add machine
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card table-card">
+                        <table class="data-table" id="admin-machines-table">
+                            <thead>
+                                <tr>
+                                    <th>Machine Name</th>
+                                    <th>Condition</th>
+                                    <th>Years of Use</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-machines-tbody">
+                                <!-- Dynamic machines rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- TAB: Reports -->
                 <div id="admin-view-reports" class="tab-view">
                     <div class="view-header-row">
@@ -1677,6 +1720,42 @@
                 <div class="modal-footer">
                     <button type="button" class="btn-reset" onclick="closeModal('modal-tool')">Cancel</button>
                     <button type="submit" class="btn-save">Save Tool</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Machine Modal -->
+    <div id="modal-machine" class="modal-overlay">
+        <div class="modal-card" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 id="modal-machine-title">Add New Machine</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-machine')">×</button>
+            </div>
+            <form id="form-machine" onsubmit="saveMachineModal(event)">
+                <input type="hidden" id="modal-machine-id">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>MACHINE NAME</label>
+                        <input type="text" id="modal-machine-name" placeholder="e.g. CNC-01" required style="width:100%; box-sizing:border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>CONDITION</label>
+                        <select id="modal-machine-condition" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-white); color: var(--text-dark);">
+                            <option value="Good">Good</option>
+                            <option value="OK">OK</option>
+                            <option value="Needs Service">Needs Service</option>
+                            <option value="Broken">Broken</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>YEARS OF USE</label>
+                        <input type="number" id="modal-machine-years" placeholder="e.g. 3" min="0" required style="width:100%; box-sizing:border-box;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" onclick="closeModal('modal-machine')">Cancel</button>
+                    <button type="submit" class="btn-save">Save Machine</button>
                 </div>
             </form>
         </div>
