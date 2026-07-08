@@ -1026,6 +1026,25 @@ async function saveCustomerModal(e) {
     populateFilterDropdowns();
     updateAdminDashboard();
     
+    // Auto-return to Add Part modal if we came from there
+    if (window.tempPartModalState) {
+        openAddPartModal();
+        
+        // Restore input values
+        document.getElementById('modal-part-no').value = window.tempPartModalState.partNo;
+        document.getElementById('modal-part-comp').value = window.tempPartModalState.comp;
+        document.getElementById('modal-part-process').value = window.tempPartModalState.process;
+        document.getElementById('modal-part-index').value = window.tempPartModalState.index;
+        
+        // Select newly added customer
+        const select = document.getElementById('modal-part-customer');
+        if (select) {
+            select.value = name;
+        }
+        
+        window.tempPartModalState = null;
+    }
+    
     // Perform background DB sync
     if (typeof window.dbSaveCustomer !== 'undefined' && window.supabaseClient) {
         try {
@@ -1892,6 +1911,37 @@ window.deleteScheduleEvent = deleteScheduleEvent;
 window.addAnnouncementEvent = addAnnouncementEvent;
 window.deleteAnnouncementEvent = deleteAnnouncementEvent;
 
+// Helper variables & controllers for customer creation within part modal
+window.tempPartModalState = null;
+
+function openAddCustomerModalFromPartModal(event) {
+    if (event) event.stopPropagation();
+    
+    window.tempPartModalState = {
+        partNo: document.getElementById('modal-part-no').value,
+        comp: document.getElementById('modal-part-comp').value,
+        process: document.getElementById('modal-part-process').value,
+        index: document.getElementById('modal-part-index').value
+    };
+    
+    closeModal('modal-part');
+    openAddCustomerModal();
+}
+
+function cancelCustomerModal() {
+    closeModal('modal-customer');
+    if (window.tempPartModalState) {
+        openAddPartModal();
+        // Restore input values
+        document.getElementById('modal-part-no').value = window.tempPartModalState.partNo;
+        document.getElementById('modal-part-comp').value = window.tempPartModalState.comp;
+        document.getElementById('modal-part-process').value = window.tempPartModalState.process;
+        document.getElementById('modal-part-index').value = window.tempPartModalState.index;
+        
+        window.tempPartModalState = null;
+    }
+}
+
 // Export functions for ESM imports
 export {
     renderHomepageConfig, addScheduleEvent, deleteScheduleEvent, addAnnouncementEvent, deleteAnnouncementEvent,
@@ -1905,7 +1955,8 @@ export {
     renderPartsTable, openAddPartModal, openEditPartModal, savePartModal, deletePart,
     getFilteredReports, renderReportsPreview, hookReportFilters, downloadCSV, exportReport,
     populateFilterDropdowns,
-    renderMachinesTable, openAddMachineModal, openEditMachineModal, saveMachineModal, deleteMachine
+    renderMachinesTable, openAddMachineModal, openEditMachineModal, saveMachineModal, deleteMachine,
+    openAddCustomerModalFromPartModal, cancelCustomerModal
 };
 
 // Bind functions to window for backward compatibility
@@ -1951,6 +2002,8 @@ window.openAddMachineModal = openAddMachineModal;
 window.openEditMachineModal = openEditMachineModal;
 window.saveMachineModal = saveMachineModal;
 window.deleteMachine = deleteMachine;
+window.openAddCustomerModalFromPartModal = openAddCustomerModalFromPartModal;
+window.cancelCustomerModal = cancelCustomerModal;
 
 
 
