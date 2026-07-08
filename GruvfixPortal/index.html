@@ -1530,6 +1530,8 @@
             <form id="form-customer" onsubmit="saveCustomerModal(event)">
                 <input type="hidden" id="modal-customer-index">
                 <div class="modal-body">
+                    <!-- Validation and Database Error Container -->
+                    <div id="modal-customer-error" style="display: none; color: #ef4444; background-color: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.15); padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);"></div>
                     <div class="form-group">
                         <label>COMPANY NAME</label>
                         <input type="text" id="modal-customer-name" placeholder="e.g. TATA MOTORS" required>

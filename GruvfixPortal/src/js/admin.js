@@ -958,6 +958,11 @@ function renderCustomersTable() {
 }
 
 function openAddCustomerModal() {
+    const errContainer = document.getElementById('modal-customer-error');
+    if (errContainer) {
+        errContainer.style.display = 'none';
+        errContainer.textContent = '';
+    }
     document.getElementById('modal-customer-title').textContent = 'Add New Customer';
     document.getElementById('modal-customer-index').value = '-1';
     document.getElementById('modal-customer-name').value = '';
@@ -969,6 +974,11 @@ function openAddCustomerModal() {
 }
 
 function openEditCustomerModal(index) {
+    const errContainer = document.getElementById('modal-customer-error');
+    if (errContainer) {
+        errContainer.style.display = 'none';
+        errContainer.textContent = '';
+    }
     const customer = customers[index];
     document.getElementById('modal-customer-title').textContent = 'Edit Customer';
     document.getElementById('modal-customer-index').value = index;
@@ -982,6 +992,14 @@ function openEditCustomerModal(index) {
 
 async function saveCustomerModal(e) {
     e.preventDefault();
+    
+    // Clear previous error
+    const errContainer = document.getElementById('modal-customer-error');
+    if (errContainer) {
+        errContainer.style.display = 'none';
+        errContainer.textContent = '';
+    }
+
     const index = parseInt(document.getElementById('modal-customer-index').value);
     const name = document.getElementById('modal-customer-name').value.trim();
     const contact = document.getElementById('modal-customer-contact').value.trim();
@@ -989,82 +1007,95 @@ async function saveCustomerModal(e) {
     const code = document.getElementById('modal-customer-code').value.trim();
     const notes = document.getElementById('modal-customer-notes').value.trim();
     
+    function showErr(msg) {
+        if (errContainer) {
+            errContainer.textContent = msg;
+            errContainer.style.display = 'block';
+        } else {
+            showToast(msg, 'error');
+        }
+    }
+
     // Validation
     if (!name) {
-        showToast("Customer name is required.", "error");
+        showErr("Customer name is required.");
         return;
     }
     if (code && !/^[A-Za-z0-9-]+$/.test(code)) {
-        showToast("Customer code must be alphanumeric.", "error");
+        showErr("Customer code must be alphanumeric.");
         return;
     }
     if (gst && !/^[A-Za-z0-9]{15}$/.test(gst)) {
-        showToast("GST number must be 15 alphanumeric characters.", "error");
+        showErr("GST number must be 15 alphanumeric characters.");
         return;
     }
     
     const newCustObj = { name, code, notes, contact, gst };
     
-    // Backup state for Optimistic UI Rollback
-    const backupCustomers = JSON.parse(JSON.stringify(customers));
-    const backupParts = JSON.parse(JSON.stringify(parts));
-    
-    // Apply local state updates optimistically
-    if (index === -1) {
-        customers.push(newCustObj);
-        showToast('Customer added successfully.');
-    } else {
-        const oldName = customers[index].name;
-        customers[index] = newCustObj;
-        cascadeCustomerUpdate(oldName, name);
-        showToast('Customer updated successfully.');
+    // Disable form submission / show saving indicator
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : 'Save Customer';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
     }
-    
-    // Render immediately
-    closeModal('modal-customer');
-    renderCustomersTable();
-    populateFilterDropdowns();
-    updateAdminDashboard();
-    
-    // Auto-return to Add Part modal if we came from there
-    if (window.tempPartModalState) {
-        openAddPartModal();
-        
-        // Restore input values
-        document.getElementById('modal-part-no').value = window.tempPartModalState.partNo;
-        document.getElementById('modal-part-comp').value = window.tempPartModalState.comp;
-        document.getElementById('modal-part-process').value = window.tempPartModalState.process;
-        document.getElementById('modal-part-index').value = window.tempPartModalState.index;
-        
-        // Select newly added customer
-        const select = document.getElementById('modal-part-customer');
-        if (select) {
-            select.value = name;
-        }
-        
-        window.tempPartModalState = null;
-    }
-    
-    // Perform background DB sync
-    if (typeof window.dbSaveCustomer !== 'undefined' && window.supabaseClient) {
-        try {
+
+    try {
+        // Perform non-optimistic DB sync to keep operator in form in case of errors
+        if (typeof window.dbSaveCustomer !== 'undefined' && window.supabaseClient) {
             if (index !== -1) {
-                const oldName = backupCustomers[index].name;
+                const oldName = customers[index].name;
                 if (oldName !== name) {
                     await window.dbDeleteCustomer(oldName);
                 }
             }
             await window.dbSaveCustomer(newCustObj);
             await window.syncFromSupabase();
-        } catch (err) {
-            console.error("Error saving customer:", err);
-            // Rollback local state
-            window.customers = backupCustomers;
-            window.parts = backupParts;
-            renderCustomersTable();
-            populateFilterDropdowns();
-            updateAdminDashboard();
-            window.showToast("Failed to save changes. Rolled back.", "error");
+        } else {
+            // Local fallback
+            if (index === -1) {
+                window.customers.push(newCustObj);
+            } else {
+                const oldName = customers[index].name;
+                window.customers[index] = newCustObj;
+                cascadeCustomerUpdate(oldName, name);
+            }
+        }
+        
+        // Success execution
+        closeModal('modal-customer');
+        showToast(index === -1 ? 'Customer added successfully.' : 'Customer updated successfully.');
+        
+        renderCustomersTable();
+        populateFilterDropdowns();
+        updateAdminDashboard();
+
+        // Auto-return to Add Part modal if we came from there
+        if (window.tempPartModalState) {
+            openAddPartModal();
+            
+            // Restore input values
+            document.getElementById('modal-part-no').value = window.tempPartModalState.partNo;
+            document.getElementById('modal-part-comp').value = window.tempPartModalState.comp;
+            document.getElementById('modal-part-process').value = window.tempPartModalState.process;
+            document.getElementById('modal-part-index').value = window.tempPartModalState.index;
+            
+            // Select newly added customer
+            const select = document.getElementById('modal-part-customer');
+            if (select) {
+                select.value = name;
+            }
+            
+            window.tempPartModalState = null;
+        }
+
+    } catch (err) {
+        console.error("Error saving customer:", err);
+        showErr(err.message || "Failed to save customer. Please try again.");
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
     }
 }
