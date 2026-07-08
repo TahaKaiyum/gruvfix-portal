@@ -135,10 +135,7 @@ function addPartRow() {
         <div class="col-proc">
             <select id="proc-select-${rowId}" required>
                 <option value="Cutting" selected>Cutting</option>
-                <option value="Punching">Punching</option>
-                <option value="Molding">Molding</option>
-                <option value="Curing">Curing</option>
-                <option value="Trimming">Trimming</option>
+                <option value="Machining">Machining</option>
             </select>
         </div>
         <div class="col-qty">
