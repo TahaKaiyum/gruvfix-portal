@@ -1059,8 +1059,8 @@ async function saveCustomerModal(e) {
         } catch (err) {
             console.error("Error saving customer:", err);
             // Rollback local state
-            customers = backupCustomers;
-            parts = backupParts;
+            window.customers = backupCustomers;
+            window.parts = backupParts;
             renderCustomersTable();
             populateFilterDropdowns();
             updateAdminDashboard();
@@ -1079,7 +1079,7 @@ async function deleteCustomer(index) {
         const backupParts = JSON.parse(JSON.stringify(parts));
         
         // Apply local state updates optimistically
-        parts = parts.filter(p => p.customer !== name);
+        window.parts = parts.filter(p => p.customer !== name);
         customers.splice(index, 1);
         
         // Render immediately
@@ -1097,8 +1097,8 @@ async function deleteCustomer(index) {
             } catch (err) {
                 console.error("Error deleting customer:", err);
                 // Rollback local state
-                customers = backupCustomers;
-                parts = backupParts;
+                window.customers = backupCustomers;
+                window.parts = backupParts;
                 renderCustomersTable();
                 renderPartsTable();
                 populateFilterDropdowns();
