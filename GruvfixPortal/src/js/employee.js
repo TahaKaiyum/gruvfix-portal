@@ -271,12 +271,68 @@ function updateSummary() {
     }
 }
 
-function resetForm() {
+function populateHourSlots() {
+    const shiftSelect = document.getElementById('entry-shift');
     const hourSelect = document.getElementById('entry-hour');
-    if (hourSelect) hourSelect.selectedIndex = 0;
-    
+    if (!shiftSelect || !hourSelect) return;
+
+    const selectedShift = shiftSelect.value;
+    const prevValue = hourSelect.value;
+
+    let slots = [];
+    if (selectedShift.includes('Night Shift')) {
+        slots = [
+            "20:00 - 21:00",
+            "21:00 - 22:00",
+            "22:00 - 23:00",
+            "23:00 - 00:00",
+            "00:00 - 01:00",
+            "01:00 - 02:00",
+            "02:00 - 03:00",
+            "03:00 - 04:00",
+            "04:00 - 05:00",
+            "05:00 - 06:00",
+            "06:00 - 07:00",
+            "07:00 - 08:00"
+        ];
+    } else {
+        slots = [
+            "08:00 - 09:00",
+            "09:00 - 10:00",
+            "10:00 - 11:00",
+            "11:00 - 12:00",
+            "12:00 - 13:00",
+            "13:00 - 14:00",
+            "14:00 - 15:00",
+            "15:00 - 16:00",
+            "16:00 - 17:00",
+            "17:00 - 18:00",
+            "18:00 - 19:00",
+            "19:00 - 20:00"
+        ];
+    }
+
+    hourSelect.innerHTML = '<option value="" disabled selected>Select hour</option>';
+    slots.forEach(slot => {
+        const opt = document.createElement('option');
+        opt.value = slot;
+        opt.textContent = slot;
+        hourSelect.appendChild(opt);
+    });
+
+    if (slots.includes(prevValue)) {
+        hourSelect.value = prevValue;
+    }
+}
+
+function resetForm() {
     const shiftSelect = document.getElementById('entry-shift');
     if (shiftSelect) shiftSelect.selectedIndex = 0;
+    
+    populateHourSlots();
+    
+    const hourSelect = document.getElementById('entry-hour');
+    if (hourSelect) hourSelect.selectedIndex = 0;
     
     const container = document.getElementById('part-rows-container');
     if (container) container.innerHTML = '';
@@ -623,7 +679,8 @@ async function clearAllTodayEntries() {
 export {
     switchDashboardTab, updateEmployeeStats, addPartRow, deletePartRow,
     handleQtyChange, triggerAttachment, handleFileSelected,
-    resetForm, saveWorkEntries, renderTodayEntriesTable, deleteTodayEntry, clearAllTodayEntries, renderHistoryTable
+    resetForm, saveWorkEntries, renderTodayEntriesTable, deleteTodayEntry, clearAllTodayEntries, renderHistoryTable,
+    populateHourSlots
 };
 
 // Bind functions to window for backward compatibility
@@ -640,6 +697,16 @@ window.renderTodayEntriesTable = renderTodayEntriesTable;
 window.deleteTodayEntry = deleteTodayEntry;
 window.clearAllTodayEntries = clearAllTodayEntries;
 window.renderHistoryTable = renderHistoryTable;
+window.populateHourSlots = populateHourSlots;
+
+// Initialize listeners on DOM ready
+window.addEventListener('DOMContentLoaded', () => {
+    const shiftSelect = document.getElementById('entry-shift');
+    if (shiftSelect) {
+        shiftSelect.addEventListener('change', populateHourSlots);
+        populateHourSlots(); // Seed initial day shift hour slots
+    }
+});
 
 
 
