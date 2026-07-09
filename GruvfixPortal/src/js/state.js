@@ -269,39 +269,7 @@ async function syncFromSupabase() {
             .select('*');
         if (custErr) throw custErr;
 
-        // Extract settings config from special customer __SYSTEM_SETTINGS
-        const settingsRecord = dbCustomers.find(c => c.name === '__SYSTEM_SETTINGS');
-        if (settingsRecord) {
-            try {
-                const settingsObj = JSON.parse(settingsRecord.notes);
-                if (settingsObj.schedule) todaySchedule = settingsObj.schedule;
-                if (settingsObj.announcements) announcements = settingsObj.announcements;
-            } catch (e) {
-                console.error("Error decoding __SYSTEM_SETTINGS:", e);
-            }
-        }
-
-        // Extract machines list from special customer __MACHINES
-        const machinesRecord = dbCustomers.find(c => c.name === '__MACHINES');
-        if (machinesRecord && machinesRecord.notes) {
-            try {
-                machines = JSON.parse(machinesRecord.notes);
-            } catch (e) {
-                console.error("Error decoding __MACHINES:", e);
-                machines = [];
-            }
-        } else {
-            // Seed default machines if not present in db
-            machines = [
-                { id: 'mach-1', name: 'CNC-01', condition: 'Good', yearsOfUse: 2 },
-                { id: 'mach-2', name: 'CNC-02', condition: 'Good', yearsOfUse: 3 },
-                { id: 'mach-3', name: 'CNC-03', condition: 'OK', yearsOfUse: 5 },
-                { id: 'mach-4', name: 'PNS-01', condition: 'Good', yearsOfUse: 1 },
-                { id: 'mach-5', name: 'MLD-02', condition: 'Good', yearsOfUse: 2 }
-            ];
-        }
-
-        customers = dbCustomers
+        window.customers = dbCustomers
             .filter(c => c.name !== '__SYSTEM_SETTINGS' && c.name !== '__MACHINES')
             .map(c => ({
                 name: c.name,
@@ -310,6 +278,91 @@ async function syncFromSupabase() {
                 contact: c.contact,
                 gst: c.gst
             }));
+
+        // Fetch Machines (with fallback to legacy __MACHINES row in customers)
+        try {
+            const { data: dbMachines, error: machErr } = await supabaseClient
+                .from('machines')
+                .select('*');
+            if (machErr) throw machErr;
+            window.machines = dbMachines.map(m => ({
+                id: m.id,
+                name: m.name,
+                condition: m.condition,
+                yearsOfUse: m.years_of_use
+            }));
+        } catch (err) {
+            console.warn("New 'machines' table not found or query failed. Falling back to legacy __MACHINES record:", err);
+            const machinesRecord = dbCustomers.find(c => c.name === '__MACHINES');
+            if (machinesRecord && machinesRecord.notes) {
+                try {
+                    window.machines = JSON.parse(machinesRecord.notes);
+                } catch (e) {
+                    console.error("Error decoding legacy __MACHINES:", e);
+                    window.machines = [];
+                }
+            } else {
+                window.machines = [
+                    { id: 'mach-1', name: 'CNC-01', condition: 'Good', yearsOfUse: 2 },
+                    { id: 'mach-2', name: 'CNC-02', condition: 'Good', yearsOfUse: 3 },
+                    { id: 'mach-3', name: 'CNC-03', condition: 'OK', yearsOfUse: 5 },
+                    { id: 'mach-4', name: 'PNS-01', condition: 'Good', yearsOfUse: 1 },
+                    { id: 'mach-5', name: 'MLD-02', condition: 'Good', yearsOfUse: 2 }
+                ];
+            }
+        }
+
+        // Fetch Announcements (with fallback to legacy __SYSTEM_SETTINGS row in customers)
+        let announcementsLoaded = false;
+        try {
+            const { data: dbAnnouncements, error: annErr } = await supabaseClient
+                .from('announcements')
+                .select('*');
+            if (annErr) throw annErr;
+            window.announcements = dbAnnouncements.map(a => ({
+                id: a.id,
+                text: a.text,
+                date: a.date,
+                type: a.type
+            }));
+            announcementsLoaded = true;
+        } catch (err) {
+            console.warn("New 'announcements' table query failed. Falling back to legacy __SYSTEM_SETTINGS:", err);
+        }
+
+        // Fetch Schedules (with fallback to legacy __SYSTEM_SETTINGS row in customers)
+        let schedulesLoaded = false;
+        try {
+            const { data: dbSchedules, error: schedErr } = await supabaseClient
+                .from('schedules')
+                .select('*');
+            if (schedErr) throw schedErr;
+            window.todaySchedule = dbSchedules.map(s => ({
+                time: s.time,
+                text: s.text
+            }));
+            schedulesLoaded = true;
+        } catch (err) {
+            console.warn("New 'schedules' table query failed. Falling back to legacy __SYSTEM_SETTINGS:", err);
+        }
+
+        // Fallback for Announcements and Schedules
+        if (!announcementsLoaded || !schedulesLoaded) {
+            const settingsRecord = dbCustomers.find(c => c.name === '__SYSTEM_SETTINGS');
+            if (settingsRecord) {
+                try {
+                    const settingsObj = JSON.parse(settingsRecord.notes);
+                    if (!schedulesLoaded && settingsObj.schedule) {
+                        window.todaySchedule = settingsObj.schedule;
+                    }
+                    if (!announcementsLoaded && settingsObj.announcements) {
+                        window.announcements = settingsObj.announcements;
+                    }
+                } catch (e) {
+                    console.error("Error decoding legacy __SYSTEM_SETTINGS:", e);
+                }
+            }
+        }
         
         // 3. Fetch Parts
         const { data: dbParts, error: partsErr } = await supabaseClient
@@ -570,7 +623,52 @@ async function dbDeleteTool(name) {
 
 // Export functions for module imports
 async function dbSaveSystemSettings(schedule, annList) {
-    if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+
+    let useNewTables = true;
+    try {
+        // 1. Update announcements table
+        const { error: delAnnErr } = await supabaseClient
+            .from('announcements')
+            .delete()
+            .neq('id', '_temp_');
+        if (delAnnErr) throw delAnnErr;
+
+        if (annList && annList.length > 0) {
+            const { error: insAnnErr } = await supabaseClient
+                .from('announcements')
+                .insert(annList.map(a => ({
+                    id: a.id,
+                    text: a.text,
+                    date: a.date,
+                    type: a.type
+                })));
+            if (insAnnErr) throw insAnnErr;
+        }
+
+        // 2. Update schedules table
+        const { error: delSchedErr } = await supabaseClient
+            .from('schedules')
+            .delete()
+            .neq('id', -1);
+        if (delSchedErr) throw delSchedErr;
+
+        if (schedule && schedule.length > 0) {
+            const { error: insSchedErr } = await supabaseClient
+                .from('schedules')
+                .insert(schedule.map(s => ({
+                    time: s.time,
+                    text: s.text
+                })));
+            if (insSchedErr) throw insSchedErr;
+        }
+    } catch (err) {
+        console.warn("Saving to new tables failed. Falling back to legacy __SYSTEM_SETTINGS record:", err);
+        useNewTables = false;
+    }
+
+    // Always keep legacy record in sync for gradual migration / fallback safety
+    if (!useNewTables && typeof dbSaveCustomer !== 'undefined') {
         const notesStr = JSON.stringify({ schedule: schedule, announcements: annList });
         await dbSaveCustomer({
             name: '__SYSTEM_SETTINGS',
@@ -583,7 +681,35 @@ async function dbSaveSystemSettings(schedule, annList) {
 }
 
 async function dbSaveMachines(machinesList) {
-    if (typeof dbSaveCustomer !== 'undefined' && supabaseClient) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    
+    let useNewTable = true;
+    try {
+        // Try deleting all from the new 'machines' table first
+        const { error: delErr } = await supabaseClient
+            .from('machines')
+            .delete()
+            .neq('id', '_temp_');
+        if (delErr) throw delErr;
+        
+        if (machinesList.length > 0) {
+            const { error: insErr } = await supabaseClient
+                .from('machines')
+                .insert(machinesList.map(m => ({
+                    id: m.id,
+                    name: m.name,
+                    condition: m.condition,
+                    years_of_use: m.yearsOfUse
+                })));
+            if (insErr) throw insErr;
+        }
+    } catch (err) {
+        console.warn("Saving to new 'machines' table failed. Falling back to legacy __MACHINES record:", err);
+        useNewTable = false;
+    }
+
+    // Always keep legacy record in sync for gradual migration / fallback safety
+    if (!useNewTable && typeof dbSaveCustomer !== 'undefined') {
         await dbSaveCustomer({
             name: '__MACHINES',
             code: 'MACHINES',
