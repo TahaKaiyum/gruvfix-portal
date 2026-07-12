@@ -919,7 +919,7 @@ function renderCustomersTable() {
     if (nextBtn) nextBtn.disabled = customerCurrentPage === totalPages;
     
     if (paginatedItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="empty-table-state">No customers found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-table-state">No customers found.</td></tr>`;
         return;
     }
     
@@ -948,6 +948,7 @@ function renderCustomersTable() {
             <td><strong>${cust.name}</strong></td>
             <td><code>${cust.code || '—'}</code></td>
             <td>${cust.notes || '—'}</td>
+            <td>${cust.updatedBy || '—'}</td>
             <td style="text-align: right; width: 100px;">
                 ${editIcon}
                 ${deleteIcon}
@@ -1030,7 +1031,19 @@ async function saveCustomerModal(e) {
         return;
     }
     
-    const newCustObj = { name, code, notes, contact, gst };
+    // Get active user context
+    const userStr = window.loggedInUser 
+        ? (window.loggedInUser.name || window.loggedInUser.empid || window.loggedInUser.email || 'System') 
+        : 'System';
+        
+    let createdBy = userStr;
+    let updatedBy = userStr;
+    
+    if (index !== -1 && customers[index]) {
+        createdBy = customers[index].createdBy || userStr;
+    }
+    
+    const newCustObj = { name, code, notes, contact, gst, createdBy, updatedBy };
     
     // Disable form submission / show saving indicator
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -1153,7 +1166,7 @@ function renderPartsTable() {
     const filtered = parts.filter(p => p.partNo.toLowerCase().includes(query) || p.component.toLowerCase().includes(query) || p.customer.toLowerCase().includes(query));
     
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="empty-table-state">No parts found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-table-state">No parts found.</td></tr>`;
         return;
     }
     
@@ -1183,6 +1196,7 @@ function renderPartsTable() {
             <td><strong>${part.component}</strong></td>
             <td>${part.customer}</td>
             <td>${part.process || '—'}</td>
+            <td>${part.updatedBy || '—'}</td>
             <td style="text-align: right; width: 100px;">
                 ${editIcon}
                 ${deleteIcon}
@@ -1240,7 +1254,19 @@ async function savePartModal(e) {
     const customer = document.getElementById('modal-part-customer').value;
     const process = document.getElementById('modal-part-process').value.trim();
     
-    const newPartObj = { partNo, component, customer, process };
+    // Get active user context
+    const userStr = window.loggedInUser 
+        ? (window.loggedInUser.name || window.loggedInUser.empid || window.loggedInUser.email || 'System') 
+        : 'System';
+        
+    let createdBy = userStr;
+    let updatedBy = userStr;
+    
+    if (index !== -1 && parts[index]) {
+        createdBy = parts[index].createdBy || userStr;
+    }
+    
+    const newPartObj = { partNo, component, customer, process, createdBy, updatedBy };
     
     if (index === -1) {
         if (typeof window.dbSavePart !== 'undefined' && window.supabaseClient) {

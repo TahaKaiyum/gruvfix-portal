@@ -276,7 +276,9 @@ async function syncFromSupabase() {
                 code: c.code,
                 notes: c.notes,
                 contact: c.contact,
-                gst: c.gst
+                gst: c.gst,
+                createdBy: c.created_by,
+                updatedBy: c.updated_by
             }));
 
         // Fetch Machines (with fallback to legacy __MACHINES row in customers)
@@ -373,7 +375,9 @@ async function syncFromSupabase() {
             partNo: p.part_no,
             component: p.component,
             customer: p.customer,
-            process: p.process
+            process: p.process,
+            createdBy: p.created_by,
+            updatedBy: p.updated_by
         }));
         
         // 4. Fetch Tools
@@ -481,7 +485,9 @@ async function dbSaveCustomer(custObj) {
             code: custObj.code,
             notes: custObj.notes,
             contact: custObj.contact,
-            gst: custObj.gst
+            gst: custObj.gst,
+            created_by: custObj.createdBy,
+            updated_by: custObj.updatedBy
         });
     if (error) throw error;
 }
@@ -503,7 +509,9 @@ async function dbSavePart(partObj) {
             part_no: partObj.partNo,
             component: partObj.component,
             customer: partObj.customer,
-            process: partObj.process
+            process: partObj.process,
+            created_by: partObj.createdBy,
+            updated_by: partObj.updatedBy
         });
     if (error) throw error;
 }
