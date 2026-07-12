@@ -75,160 +75,117 @@
 
             <!-- Right Side: Dark Green Operations Snapshot -->
             <div class="image-side">
-                <div class="live-snapshot-content">
+                <div class="live-snapshot-content split-layout">
                     
-                    <!-- Header -->
-                    <div class="snapshot-header">
-                        <div>
-                            <div class="live-indicator-wrapper">
-                                <span class="live-dot-green animate-pulse"></span>
-                                <h2>Production Snapshot</h2>
+                    <!-- Column 1: Operations Dashboard -->
+                    <div class="snapshot-dash-panel">
+                        <!-- Header -->
+                        <div class="snapshot-header">
+                            <div>
+                                <div class="live-indicator-wrapper">
+                                    <span class="live-dot-green animate-pulse"></span>
+                                    <h2>Production Snapshot</h2>
+                                </div>
+                                <p>Real-time overview of today's operations</p>
                             </div>
-                            <p>Real-time overview of today's operations</p>
+                            <span class="shift-badge-outlined">SHIFT A (08:00 - 20:00)</span>
                         </div>
-                        <span class="shift-badge-outlined">SHIFT A (08:00 - 20:00)</span>
+
+                        <!-- Metrics Grid -->
+                        <div class="snapshot-grid">
+                            <!-- Parts Produced Today -->
+                            <div class="snapshot-card">
+                                <div class="card-icon-container">
+                                    <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="20" x2="18" y2="10"/>
+                                        <line x1="12" y1="20" x2="12" y2="4"/>
+                                        <line x1="6" y1="20" x2="6" y2="14"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-value-large" id="snap-metric-parts">1,286</span>
+                                <span class="metric-label-sub">Parts Produced</span>
+                                <span class="metric-label-desc">Today</span>
+                            </div>
+
+                            <!-- Active Operators On Floor -->
+                            <div class="snapshot-card">
+                                <div class="card-icon-container">
+                                    <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-value-large" id="snap-metric-operators">31</span>
+                                <span class="metric-label-sub">Active Operators</span>
+                                <span class="metric-label-desc">On Floor</span>
+                            </div>
+
+                            <!-- Open Tool Requests Pending -->
+                            <div class="snapshot-card">
+                                <div class="card-icon-container">
+                                    <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-value-large" id="snap-metric-tool-reqs">8</span>
+                                <span class="metric-label-sub">Open Tool Requests</span>
+                                <span class="metric-label-desc">Pending</span>
+                            </div>
+
+                            <!-- Customers Active -->
+                            <div class="snapshot-card">
+                                <div class="card-icon-container">
+                                    <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-value-large" id="snap-metric-customers">14</span>
+                                <span class="metric-label-sub">Customers</span>
+                                <span class="metric-label-desc">Active</span>
+                            </div>
+
+                            <!-- Machines Running Live -->
+                            <div class="snapshot-card">
+                                <div class="card-icon-container">
+                                    <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-value-large" id="snap-metric-machines">6</span>
+                                <span class="metric-label-sub">Machines Running</span>
+                                <span class="metric-label-desc">Live</span>
+                            </div>
+
+                            <!-- Today's Efficiency -->
+                            <div class="snapshot-card">
+                                <div class="card-icon-container">
+                                    <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <circle cx="12" cy="12" r="6"/>
+                                        <circle cx="12" cy="12" r="2"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-value-large" id="snap-metric-efficiency">94.2%</span>
+                                <span class="metric-label-sub">Today's Efficiency</span>
+                                <div class="trend-badge-wrapper">
+                                    <span class="trend-badge-pill">
+                                        ↑ 2.1% vs yesterday
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Metrics Grid -->
-                    <div class="snapshot-grid">
-                        <!-- Parts Produced Today -->
-                        <div class="snapshot-card">
-                            <div class="card-icon-container">
-                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="18" y1="20" x2="18" y2="10"/>
-                                    <line x1="12" y1="20" x2="12" y2="4"/>
-                                    <line x1="6" y1="20" x2="6" y2="14"/>
-                                </svg>
-                            </div>
-                            <span class="metric-value-large" id="snap-metric-parts">1,286</span>
-                            <span class="metric-label-sub">Parts Produced</span>
-                            <span class="metric-label-desc">Today</span>
-                        </div>
-
-                        <!-- Active Operators On Floor -->
-                        <div class="snapshot-card">
-                            <div class="card-icon-container">
-                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="9" cy="7" r="4"/>
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                </svg>
-                            </div>
-                            <span class="metric-value-large" id="snap-metric-operators">31</span>
-                            <span class="metric-label-sub">Active Operators</span>
-                            <span class="metric-label-desc">On Floor</span>
-                        </div>
-
-                        <!-- Open Tool Requests Pending -->
-                        <div class="snapshot-card">
-                            <div class="card-icon-container">
-                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                                </svg>
-                            </div>
-                            <span class="metric-value-large" id="snap-metric-tool-reqs">8</span>
-                            <span class="metric-label-sub">Open Tool Requests</span>
-                            <span class="metric-label-desc">Pending</span>
-                        </div>
-
-                        <!-- Customers Active -->
-                        <div class="snapshot-card">
-                            <div class="card-icon-container">
-                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="12" cy="7" r="4"/>
-                                </svg>
-                            </div>
-                            <span class="metric-value-large" id="snap-metric-customers">14</span>
-                            <span class="metric-label-sub">Customers</span>
-                            <span class="metric-label-desc">Active</span>
-                        </div>
-
-                        <!-- Machines Running Live -->
-                        <div class="snapshot-card">
-                            <div class="card-icon-container">
-                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="3"/>
-                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                                </svg>
-                            </div>
-                            <span class="metric-value-large" id="snap-metric-machines">6</span>
-                            <span class="metric-label-sub">Machines Running</span>
-                            <span class="metric-label-desc">Live</span>
-                        </div>
-
-                        <!-- Today's Efficiency -->
-                        <div class="snapshot-card">
-                            <div class="card-icon-container">
-                                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <circle cx="12" cy="12" r="6"/>
-                                    <circle cx="12" cy="12" r="2"/>
-                                </svg>
-                            </div>
-                            <span class="metric-value-large" id="snap-metric-efficiency">94.2%</span>
-                            <span class="metric-label-sub">Today's Efficiency</span>
-                            <div class="trend-badge-wrapper">
-                                <span class="trend-badge-pill">
-                                    ↑ 2.1% vs yesterday
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bottom Split Section (Schedule & Announcements) -->
-                    <div class="snapshot-bottom-row">
-                        
-                        <!-- Today's Schedule Card -->
-                        <div class="snapshot-sub-card">
-                            <h3 class="sub-card-title">Today's Schedule</h3>
-                            <div class="timeline-container">
-                                <div class="timeline-line"></div>
-                                
-                                <!-- Timeline Item 1 -->
-                                <div class="timeline-item">
-                                    <span class="timeline-dot"></span>
-                                    <div>
-                                        <span class="timeline-time">08:00</span>
-                                        <p class="timeline-text">Shift A Start</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Timeline Item 2 -->
-                                <div class="timeline-item">
-                                    <span class="timeline-dot"></span>
-                                    <div>
-                                        <span class="timeline-time">12:00</span>
-                                        <p class="timeline-text">Lunch Break</p>
-                                    </div>
-                                </div>
-
-                                <!-- Timeline Item 3 -->
-                                <div class="timeline-item">
-                                    <span class="timeline-dot"></span>
-                                    <div>
-                                        <span class="timeline-time">13:00</span>
-                                        <p class="timeline-text">Production Resume</p>
-                                    </div>
-                                </div>
-
-                                <!-- Timeline Item 4 -->
-                                <div class="timeline-item">
-                                    <span class="timeline-dot"></span>
-                                    <div>
-                                        <span class="timeline-time">20:00</span>
-                                        <p class="timeline-text">Shift B Start</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Latest Announcements Card -->
-                        <div class="snapshot-sub-card announcements-sub-card">
-                            <div style="flex-grow: 1;">
-                                <h3 class="sub-card-title">Latest Announcements</h3>
-                                <div class="announcements-list">
+                    <!-- Column 2: Announcements -->
+                    <div class="snapshot-ann-panel">
+                        <div class="snapshot-sub-card announcements-sub-card full-height" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                            <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                                <h3 class="sub-card-title" style="margin-bottom: 20px;">Latest Announcements</h3>
+                                <div class="announcements-list" style="flex-grow: 1; overflow-y: auto;">
                                     
                                     <!-- Announcement 1 -->
                                     <div class="announcement-item">
@@ -272,7 +229,7 @@
                                 </div>
                             </div>
 
-                            <a href="#" onclick="openAllAnnouncementsModal(event)" class="view-ann-link">View all announcements →</a>
+                            <a href="#" onclick="openAllAnnouncementsModal(event)" class="view-ann-link" style="margin-top: 15px; display: inline-block;">View all announcements →</a>
                         </div>
                     </div>
 

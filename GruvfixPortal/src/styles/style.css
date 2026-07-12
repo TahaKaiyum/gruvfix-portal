@@ -3012,6 +3012,44 @@ input:checked + .slider-toggle:before {
     color: rgba(255, 255, 255, 0.35);
 }
 
+/* Split Layout Dashboard & Announcements */
+.live-snapshot-content.split-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    height: 100%;
+}
+
+.snapshot-dash-panel {
+    flex: 1.25;
+    display: flex;
+    flex-direction: column;
+}
+
+.snapshot-ann-panel {
+    flex: 0.75;
+    display: flex;
+    flex-direction: column;
+}
+
+.snapshot-ann-panel .announcements-sub-card.full-height {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.snapshot-ann-panel .announcements-list {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* Adjust Dashboard Grid to 2 columns on Desktop */
+.live-snapshot-content.split-layout .snapshot-grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin: 20px 0;
+}
+
 /* RESPONSIVE LAYOUT FOR LOGIN PAGE */
 @media (max-width: 1024px) {
     .split-container {
@@ -3030,6 +3068,11 @@ input:checked + .slider-toggle:before {
         padding: 50px 20px;
     }
     
+    .live-snapshot-content.split-layout {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
     .snapshot-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -3037,10 +3080,6 @@ input:checked + .slider-toggle:before {
 
 @media (max-width: 640px) {
     .snapshot-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .snapshot-bottom-row {
         grid-template-columns: 1fr;
     }
 }
