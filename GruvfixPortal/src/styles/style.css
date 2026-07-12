@@ -3083,5 +3083,9 @@ input:checked + .slider-toggle:before {
     .snapshot-grid {
         grid-template-columns: 1fr;
     }
+    
+    .live-snapshot-content.split-layout .snapshot-grid .snapshot-card {
+        grid-column: span 1 !important;
+    }
 }
 
