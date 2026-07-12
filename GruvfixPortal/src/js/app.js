@@ -225,6 +225,15 @@ function updateHomepageMetrics() {
         effEl.textContent = `${efficiency}%`;
     }
 
+    const lastUpdatedEl = document.getElementById('snapshot-last-updated');
+    if (lastUpdatedEl) {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        lastUpdatedEl.textContent = `LAST UPDATED: ${hours}:${minutes}:${seconds}`;
+    }
+
     renderHomepageSchedule();
     renderHomepageAnnouncements();
 }
