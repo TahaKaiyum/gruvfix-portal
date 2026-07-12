@@ -3017,7 +3017,8 @@ input:checked + .slider-toggle:before {
     display: flex;
     flex-direction: row;
     gap: 30px;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 .snapshot-dash-panel {
