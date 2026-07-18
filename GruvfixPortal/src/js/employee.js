@@ -677,7 +677,7 @@ export {
     switchDashboardTab, updateEmployeeStats, addPartRow, deletePartRow,
     handleQtyChange, triggerAttachment, handleFileSelected,
     resetForm, saveWorkEntries, renderTodayEntriesTable, deleteTodayEntry, clearAllTodayEntries, renderHistoryTable,
-    populateHourSlots
+    populateHourSlots, updateSummary
 };
 
 // Bind functions to window for backward compatibility
@@ -695,6 +695,7 @@ window.deleteTodayEntry = deleteTodayEntry;
 window.clearAllTodayEntries = clearAllTodayEntries;
 window.renderHistoryTable = renderHistoryTable;
 window.populateHourSlots = populateHourSlots;
+window.updateSummary = updateSummary;
 
 // Initialize listeners on DOM ready
 window.addEventListener('DOMContentLoaded', () => {
