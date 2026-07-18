@@ -170,7 +170,7 @@ function selectPartOption(rowId, partNo) {
             procSelect.value = partObj.process;
         }
         
-        if (!row.customer && partObj.customer) {
+        if (partObj.customer) {
             selectCustOption(rowId, partObj.customer);
         }
     }

@@ -1083,6 +1083,11 @@ async function saveCustomerModal(e) {
         populateFilterDropdowns();
         updateAdminDashboard();
 
+        if (activeRowIdForCustomerDropdown !== null) {
+            selectCustOption(activeRowIdForCustomerDropdown, name);
+            activeRowIdForCustomerDropdown = null;
+        }
+
         // Auto-return to Add Part modal if we came from there
         if (window.tempPartModalState) {
             openAddPartModal();
