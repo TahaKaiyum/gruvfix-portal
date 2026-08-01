@@ -1371,6 +1371,11 @@ body {
     opacity: 1;
 }
 
+/* Mobile menu toggler hidden by default */
+.btn-mobile-menu-toggle {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .split-container {
         flex-direction: column;
@@ -1398,7 +1403,7 @@ body {
         display: none !important; /* Hide overlay */
     }
     
-    /* Reposition Sidebar at Top on Mobile using CSS Grid */
+    /* Mobile Header Bar Layout */
     .sidebar {
         width: 100% !important;
         height: auto !important;
@@ -1408,18 +1413,17 @@ body {
         transform: none !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
         z-index: 100 !important;
-        display: grid !important;
-        grid-template-areas: 
-            "logo footer"
-            "menu menu" !important;
-        grid-template-columns: 1fr auto !important;
-        row-gap: 12px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
     }
     
     .sidebar-top {
-        grid-area: logo !important;
+        display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
+        gap: 12px !important;
     }
     
     .sidebar-logo-container {
@@ -1429,35 +1433,72 @@ body {
     .sidebar-brand-text {
         font-size: 14px !important;
     }
-    
-    .sidebar-menu {
-        grid-area: menu !important;
-        flex-direction: row !important;
-        gap: 8px !important;
-        margin-bottom: 0 !important;
-        overflow-x: auto !important;
-        white-space: nowrap !important;
-        -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: none !important;
-        width: 100% !important;
+
+    /* Mobile Menu Toggle Button */
+    .btn-mobile-menu-toggle {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 6px 12px !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 6px !important;
+        color: white !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        transition: background-color 0.2s !important;
     }
     
-    .sidebar-menu::-webkit-scrollbar {
+    .btn-mobile-menu-toggle:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+    }
+    
+    .btn-mobile-menu-toggle .toggle-icon-svg {
+        width: 14px !important;
+        height: 14px !important;
+        transition: transform 0.2s !important;
+    }
+    
+    .btn-mobile-menu-toggle.open .toggle-icon-svg {
+        transform: rotate(180deg) !important;
+    }
+
+    /* Dropdown Vertical Sidebar Menu List */
+    .sidebar-menu {
         display: none !important;
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        width: 100% !important;
+        background-color: var(--primary-dark) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        padding: 8px 16px !important;
+        z-index: 200 !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        transform: none !important;
+        height: auto !important;
+        overflow-y: visible !important;
+    }
+    
+    .sidebar-menu.open {
+        display: flex !important;
     }
     
     .menu-item {
-        width: auto !important;
+        width: 100% !important;
         margin-bottom: 0 !important;
-        padding: 8px 14px !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
+        padding: 10px 16px !important;
+        justify-content: flex-start !important;
         border-radius: 6px !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
+        background-color: transparent !important;
+        text-align: left !important;
     }
     
     .menu-item.active {
-        background-color: var(--primary-light) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
         color: white !important;
     }
     
@@ -1466,7 +1507,6 @@ body {
     }
     
     .sidebar-footer {
-        grid-area: footer !important;
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
@@ -1490,7 +1530,7 @@ body {
     }
     
     .main-content {
-        height: calc(100vh - 120px) !important;
+        height: calc(100vh - 60px) !important;
         width: 100% !important;
     }
     

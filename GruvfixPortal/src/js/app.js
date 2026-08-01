@@ -132,20 +132,32 @@ window.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Close sidebar on menu item click (on mobile)
+    // Close mobile menu/drawer on tab click
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', () => {
             const activeDashboard = document.querySelector('.page.active');
             if (activeDashboard) {
-                const sidebar = activeDashboard.querySelector('.sidebar');
-                const overlay = activeDashboard.querySelector('.sidebar-overlay');
-                if (sidebar && sidebar.classList.contains('open')) {
-                    sidebar.classList.remove('open');
-                    if (overlay) overlay.classList.remove('active');
+                const menu = activeDashboard.querySelector('.sidebar-menu');
+                const btn = activeDashboard.querySelector('.btn-mobile-menu-toggle');
+                if (menu && menu.classList.contains('open')) {
+                    menu.classList.remove('open');
+                    if (btn) btn.classList.remove('open');
                 }
             }
         });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.btn-mobile-menu-toggle');
+        const menu = e.target.closest('.sidebar-menu');
+        if (!toggleBtn && !menu) {
+            const openMenus = document.querySelectorAll('.sidebar-menu.open');
+            openMenus.forEach(m => m.classList.remove('open'));
+            const openBtns = document.querySelectorAll('.btn-mobile-menu-toggle.open');
+            openBtns.forEach(b => b.classList.remove('open'));
+        }
     });
 
     // Setup Mutation Observer to automatically apply mobile labels to all tables
@@ -158,17 +170,19 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ==========================================
 // 1b. MOBILE RESPONSIVENESS EVENT HANDLERS
 // ==========================================
-function toggleSidebar() {
+function toggleMobileMenu() {
     const activeDashboard = document.querySelector('.page.active');
     if (!activeDashboard) return;
-    const sidebar = activeDashboard.querySelector('.sidebar');
-    const overlay = activeDashboard.querySelector('.sidebar-overlay');
-    if (sidebar && overlay) {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('active');
+    const menu = activeDashboard.querySelector('.sidebar-menu');
+    const btn = activeDashboard.querySelector('.btn-mobile-menu-toggle');
+    if (menu) {
+        const isOpen = menu.classList.toggle('open');
+        if (btn) {
+            btn.classList.toggle('open', isOpen);
+        }
     }
 }
-window.toggleSidebar = toggleSidebar;
+window.toggleMobileMenu = toggleMobileMenu;
 
 function applyMobileTableLabels() {
     const tables = document.querySelectorAll('table.data-table');
