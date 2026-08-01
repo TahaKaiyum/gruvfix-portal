@@ -11,6 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Sidebar Mobile Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
@@ -230,6 +233,18 @@
 
     <!-- EMPLOYEE DASHBOARD CONTAINER -->
     <div id="employee-dashboard" class="page">
+        <!-- Mobile Header Bar -->
+        <div class="mobile-header-bar">
+            <button type="button" class="btn-hamburger" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div class="mobile-brand-title">Employee Portal</div>
+            <div style="width: 24px;"></div>
+        </div>
         <div class="dashboard-container">
             <!-- Sidebar -->
             <aside class="sidebar">
@@ -607,6 +622,18 @@
 
     <!-- ADMIN DASHBOARD CONTAINER -->
     <div id="admin-dashboard" class="page">
+        <!-- Mobile Header Bar -->
+        <div class="mobile-header-bar">
+            <button type="button" class="btn-hamburger" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div class="mobile-brand-title">Admin Console</div>
+            <div style="width: 24px;"></div>
+        </div>
         <div class="dashboard-container">
             <!-- Sidebar -->
             <aside class="sidebar admin-sidebar">

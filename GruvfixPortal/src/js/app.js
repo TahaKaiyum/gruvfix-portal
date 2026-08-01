@@ -131,7 +131,61 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+    // Close sidebar on menu item click (on mobile)
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const activeDashboard = document.querySelector('.page.active');
+            if (activeDashboard) {
+                const sidebar = activeDashboard.querySelector('.sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (sidebar && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                }
+            }
+        });
+    });
+
+    // Setup Mutation Observer to automatically apply mobile labels to all tables
+    const observer = new MutationObserver(() => {
+        applyMobileTableLabels();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 });
+
+// ==========================================
+// 1b. MOBILE RESPONSIVENESS EVENT HANDLERS
+// ==========================================
+function toggleSidebar() {
+    const activeDashboard = document.querySelector('.page.active');
+    if (!activeDashboard) return;
+    const sidebar = activeDashboard.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar && overlay) {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+}
+window.toggleSidebar = toggleSidebar;
+
+function applyMobileTableLabels() {
+    const tables = document.querySelectorAll('table.data-table');
+    tables.forEach(table => {
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach((cell, index) => {
+                if (headers[index] && !cell.hasAttribute('data-label')) {
+                    cell.setAttribute('data-label', headers[index]);
+                }
+            });
+        });
+    });
+}
+window.applyMobileTableLabels = applyMobileTableLabels;
 
 // ==========================================
 // 2. LIVE MONITOR WORK LOGGER & TERMINAL
