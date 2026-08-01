@@ -139,10 +139,10 @@ window.addEventListener('DOMContentLoaded', async () => {
             const activeDashboard = document.querySelector('.page.active');
             if (activeDashboard) {
                 const sidebar = activeDashboard.querySelector('.sidebar');
-                const overlay = document.getElementById('sidebar-overlay');
+                const overlay = activeDashboard.querySelector('.sidebar-overlay');
                 if (sidebar && sidebar.classList.contains('open')) {
                     sidebar.classList.remove('open');
-                    overlay.classList.remove('active');
+                    if (overlay) overlay.classList.remove('active');
                 }
             }
         });
@@ -162,7 +162,7 @@ function toggleSidebar() {
     const activeDashboard = document.querySelector('.page.active');
     if (!activeDashboard) return;
     const sidebar = activeDashboard.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
+    const overlay = activeDashboard.querySelector('.sidebar-overlay');
     if (sidebar && overlay) {
         sidebar.classList.toggle('open');
         overlay.classList.toggle('active');
