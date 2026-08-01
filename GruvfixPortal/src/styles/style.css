@@ -1404,10 +1404,10 @@ body {
         height: auto !important;
         padding: 12px 16px !important;
         background-color: var(--primary-dark) !important;
-        position: static !important;
+        position: relative !important;
         transform: none !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-        z-index: 10 !important;
+        z-index: 100 !important;
         display: grid !important;
         grid-template-areas: 
             "logo footer"
@@ -1447,6 +1447,7 @@ body {
     }
     
     .menu-item {
+        width: auto !important;
         margin-bottom: 0 !important;
         padding: 8px 14px !important;
         justify-content: center !important;
@@ -1461,8 +1462,7 @@ body {
     }
     
     .menu-label {
-        display: inline !important;
-        font-size: 12px !important;
+        display: none !important;
     }
     
     .sidebar-footer {
