@@ -1649,13 +1649,25 @@ function exportReport(format) {
     const filtered = getFilteredReports();
     const today = new Date().toISOString().split('T')[0];
     
-    if (format === 'csv' || format === 'excel') {
+    if (format === 'csv') {
         let csv = 'Date,Hour,Employee,Customer,Part #,Component,Process,Qty,Status,Machine,File\n';
         filtered.forEach(e => {
             csv += `"${e.date}","${e.hour}","${e.employee || 'EMP001'}","${e.customer}","${e.part}","${e.component}","${e.process}","${e.qty}","${e.status}","${e.machine}","${e.file}"\n`;
         });
         downloadCSV(csv, `gruvfix_report_${today}.csv`);
-        showToast(`Report exported successfully as ${format.toUpperCase()}.`);
+        showToast('Report exported successfully as CSV.');
+    } else if (format === 'excel') {
+        if (typeof XLSX === 'undefined') {
+            showToast('Excel engine not loaded. Exporting CSV instead.', 'error');
+            exportReport('csv');
+            return;
+        }
+        if (filtered.length === 0) {
+            showToast('No matching reports to export. Adjust filters above.', 'error');
+            return;
+        }
+        exportReportWorkbook(filtered, today);
+        showToast('Report + dashboard exported as Excel workbook.');
     } else if (format === 'pdf') {
         const printWindow = window.open('', '_blank', 'width=900,height=700');
         
@@ -1760,6 +1772,149 @@ function exportReport(format) {
         printWindow.document.close();
         showToast('PDF print layout opened in new window.');
     }
+}
+
+// ==========================================
+// 8b. EXCEL WORKBOOK + DASHBOARD BUILDER
+// ==========================================
+
+// One "man-hour" = one distinct (employee + date + hour-slot) combination,
+// regardless of how many part rows were logged inside that slot.
+function _slotKey(e) {
+    return `${e.employee || 'EMP001'}|${e.date}|${e.hour}`;
+}
+
+function _employeeName(empid) {
+    const list = (typeof users !== 'undefined' && Array.isArray(users)) ? users : [];
+    const match = list.find(u => u.empid === empid);
+    return (match && match.name) ? match.name : (empid || 'EMP001');
+}
+
+function _shiftLabel(shift) {
+    if (!shift) return '—';
+    if (shift.includes('Night') || shift === 'Shift B') return 'Night (B)';
+    if (shift.includes('Day') || shift === 'Shift A') return 'Day (A)';
+    return shift;
+}
+
+function _round1(n) {
+    return Math.round(n * 10) / 10;
+}
+
+// Slots available in a single full shift (see populateHourSlots in employee.js)
+const SHIFT_SLOT_COUNT = 12;
+
+function exportReportWorkbook(filtered, today) {
+    const wb = XLSX.utils.book_new();
+
+    // ---- Filter context (for the Summary sheet) ----
+    const f = id => {
+        const el = document.getElementById(id);
+        return el && el.value ? el.value : 'All';
+    };
+    const totalHours = new Set(filtered.map(_slotKey)).size;
+    const totalQty = filtered.reduce((s, e) => s + (Number(e.qty) || 0), 0);
+    const uniqueCustomers = new Set(filtered.map(e => e.customer)).size;
+    const uniqueEmployees = new Set(filtered.map(e => e.employee || 'EMP001')).size;
+
+    // ---- Sheet 1: Summary ----
+    const summaryRows = [
+        ['Gruvfix Production Report'],
+        ['Generated', new Date().toLocaleString()],
+        [],
+        ['Filters applied'],
+        ['From date', f('report-filter-from')],
+        ['To date', f('report-filter-to')],
+        ['Employee', f('report-filter-employee')],
+        ['Customer', f('report-filter-customer')],
+        ['Shift', f('report-filter-shift')],
+        ['Status', f('report-filter-status')],
+        ['Part #', f('report-filter-part')],
+        [],
+        ['Totals'],
+        ['Detail rows', filtered.length],
+        ['Hours worked (distinct hour-slots)', totalHours],
+        ['Quantity produced', totalQty],
+        ['Customers touched', uniqueCustomers],
+        ['Employees active', uniqueEmployees]
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{ wch: 34 }, { wch: 26 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+    // ---- Sheet 2: Work Log (raw hourly detail) ----
+    const logHeader = ['Date', 'Hour', 'Employee ID', 'Employee', 'Customer', 'Part #',
+        'Component', 'Process', 'Qty', 'Status', 'Machine', 'Shift', 'File'];
+    const logRows = filtered.map(e => [
+        e.date, e.hour, e.employee || 'EMP001', _employeeName(e.employee || 'EMP001'),
+        e.customer, e.part, e.component, e.process, Number(e.qty) || 0,
+        e.status, e.machine, _shiftLabel(e.shift), e.file
+    ]);
+    const wsLog = XLSX.utils.aoa_to_sheet([logHeader, ...logRows]);
+    wsLog['!cols'] = [10, 14, 12, 20, 20, 14, 16, 14, 8, 12, 12, 12, 18].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, wsLog, 'Work Log');
+
+    // ---- Sheet 3: Hours by Customer ----
+    const byCustomer = {};
+    filtered.forEach(e => {
+        const key = e.customer || '—';
+        if (!byCustomer[key]) byCustomer[key] = { slots: new Set(), qty: 0, entries: 0 };
+        byCustomer[key].slots.add(_slotKey(e));
+        byCustomer[key].qty += Number(e.qty) || 0;
+        byCustomer[key].entries += 1;
+    });
+    const custHeader = ['Customer', 'Hours Worked', 'Entries', 'Qty Produced', '% of Hours'];
+    const custRows = Object.keys(byCustomer)
+        .map(name => {
+            const c = byCustomer[name];
+            const hrs = c.slots.size;
+            return [name, hrs, c.entries, c.qty, totalHours ? _round1((hrs / totalHours) * 100) : 0];
+        })
+        .sort((a, b) => b[1] - a[1]);
+    const custTotal = ['TOTAL', totalHours,
+        custRows.reduce((s, r) => s + r[2], 0),
+        custRows.reduce((s, r) => s + r[3], 0),
+        custRows.length ? 100 : 0];
+    const custNote = ['Note: an hour-slot split across two customers counts as an hour for each, so column may exceed TOTAL.'];
+    const wsCust = XLSX.utils.aoa_to_sheet([custHeader, ...custRows, [], custTotal, [], custNote]);
+    wsCust['!cols'] = [{ wch: 24 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsCust, 'Hours by Customer');
+
+    // ---- Sheet 4: Hours by Employee (Daily) ----
+    const byEmpDay = {};
+    filtered.forEach(e => {
+        const empid = e.employee || 'EMP001';
+        const key = `${empid}|${e.date}`;
+        if (!byEmpDay[key]) {
+            byEmpDay[key] = { empid, date: e.date, shift: e.shift, hours: new Set(), qty: 0, entries: 0 };
+        }
+        byEmpDay[key].hours.add(e.hour);
+        byEmpDay[key].qty += Number(e.qty) || 0;
+        byEmpDay[key].entries += 1;
+    });
+    const empHeader = ['Employee ID', 'Employee', 'Date', 'Shift', 'Hours Logged',
+        'Shift Hours', 'Coverage %', 'Missing Hours', 'Qty Produced', 'Entries'];
+    const empRows = Object.values(byEmpDay)
+        .map(d => {
+            const hrs = d.hours.size;
+            return [
+                d.empid, _employeeName(d.empid), d.date, _shiftLabel(d.shift), hrs,
+                SHIFT_SLOT_COUNT, _round1((hrs / SHIFT_SLOT_COUNT) * 100),
+                Math.max(0, SHIFT_SLOT_COUNT - hrs), d.qty, d.entries
+            ];
+        })
+        .sort((a, b) => (a[1] + a[2]).localeCompare(b[1] + b[2]));
+    const empHoursTotal = empRows.reduce((s, r) => s + r[4], 0);
+    const empTotal = ['TOTAL', '', '', '', empHoursTotal, '',
+        empRows.length ? _round1((empHoursTotal / (empRows.length * SHIFT_SLOT_COUNT)) * 100) : 0,
+        empRows.reduce((s, r) => s + r[7], 0),
+        empRows.reduce((s, r) => s + r[8], 0),
+        empRows.reduce((s, r) => s + r[9], 0)];
+    const wsEmp = XLSX.utils.aoa_to_sheet([empHeader, ...empRows, [], empTotal]);
+    wsEmp['!cols'] = [12, 20, 12, 10, 13, 11, 11, 13, 13, 9].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, wsEmp, 'Hours by Employee');
+
+    XLSX.writeFile(wb, `gruvfix_report_${today}.xlsx`);
 }
 
 function populateFilterDropdowns() {

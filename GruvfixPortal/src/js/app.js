@@ -131,7 +131,75 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+    // Close mobile menu/drawer on tab click
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const activeDashboard = document.querySelector('.page.active');
+            if (activeDashboard) {
+                const menu = activeDashboard.querySelector('.sidebar-menu');
+                const btn = activeDashboard.querySelector('.btn-mobile-menu-toggle');
+                if (menu && menu.classList.contains('open')) {
+                    menu.classList.remove('open');
+                    if (btn) btn.classList.remove('open');
+                }
+            }
+        });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.btn-mobile-menu-toggle');
+        const menu = e.target.closest('.sidebar-menu');
+        if (!toggleBtn && !menu) {
+            const openMenus = document.querySelectorAll('.sidebar-menu.open');
+            openMenus.forEach(m => m.classList.remove('open'));
+            const openBtns = document.querySelectorAll('.btn-mobile-menu-toggle.open');
+            openBtns.forEach(b => b.classList.remove('open'));
+        }
+    });
+
+    // Setup Mutation Observer to automatically apply mobile labels to all tables
+    const observer = new MutationObserver(() => {
+        applyMobileTableLabels();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 });
+
+// ==========================================
+// 1b. MOBILE RESPONSIVENESS EVENT HANDLERS
+// ==========================================
+function toggleMobileMenu() {
+    const activeDashboard = document.querySelector('.page.active');
+    if (!activeDashboard) return;
+    const menu = activeDashboard.querySelector('.sidebar-menu');
+    const btn = activeDashboard.querySelector('.btn-mobile-menu-toggle');
+    if (menu) {
+        const isOpen = menu.classList.toggle('open');
+        if (btn) {
+            btn.classList.toggle('open', isOpen);
+        }
+    }
+}
+window.toggleMobileMenu = toggleMobileMenu;
+
+function applyMobileTableLabels() {
+    const tables = document.querySelectorAll('table.data-table');
+    tables.forEach(table => {
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach((cell, index) => {
+                if (headers[index] && !cell.hasAttribute('data-label')) {
+                    cell.setAttribute('data-label', headers[index]);
+                }
+            });
+        });
+    });
+}
+window.applyMobileTableLabels = applyMobileTableLabels;
 
 // ==========================================
 // 2. LIVE MONITOR WORK LOGGER & TERMINAL

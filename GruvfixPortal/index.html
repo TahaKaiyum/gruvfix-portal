@@ -11,6 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
@@ -230,7 +232,21 @@
 
     <!-- EMPLOYEE DASHBOARD CONTAINER -->
     <div id="employee-dashboard" class="page">
+        <!-- Mobile Header Bar -->
+        <div class="mobile-header-bar">
+            <button type="button" class="btn-hamburger" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div class="mobile-brand-title">Employee Portal</div>
+            <div style="width: 24px;"></div>
+        </div>
         <div class="dashboard-container">
+            <!-- Sidebar Mobile Overlay -->
+            <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
             <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-top">
@@ -242,6 +258,13 @@
                             <span class="brand-sub">GASKETS & SEALS LLP</span>
                         </div>
                     </div>
+                    <!-- Mobile Menu Toggle Button -->
+                    <button type="button" class="btn-mobile-menu-toggle" onclick="toggleMobileMenu()">
+                        <span>Menu</span>
+                        <svg class="toggle-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
 
                     <!-- Sidebar Menu -->
                     <nav class="sidebar-menu">
@@ -607,7 +630,21 @@
 
     <!-- ADMIN DASHBOARD CONTAINER -->
     <div id="admin-dashboard" class="page">
+        <!-- Mobile Header Bar -->
+        <div class="mobile-header-bar">
+            <button type="button" class="btn-hamburger" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div class="mobile-brand-title">Admin Console</div>
+            <div style="width: 24px;"></div>
+        </div>
         <div class="dashboard-container">
+            <!-- Sidebar Mobile Overlay -->
+            <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
             <!-- Sidebar -->
             <aside class="sidebar admin-sidebar">
                 <div class="sidebar-top">
@@ -619,6 +656,13 @@
                             <span class="brand-sub">GASKETS & SEALS LLP</span>
                         </div>
                     </div>
+                    <!-- Mobile Menu Toggle Button -->
+                    <button type="button" class="btn-mobile-menu-toggle" onclick="toggleMobileMenu()">
+                        <span>Menu</span>
+                        <svg class="toggle-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
 
                     <!-- Sidebar Menu -->
                     <nav class="sidebar-menu">
@@ -1767,6 +1811,8 @@
 
     <!-- Script Files -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SheetJS: multi-sheet .xlsx workbook generation for Reports export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script type="module" src="src/js/app.js?v=2.2.0"></script>
     <script type="module" src="src/main.tsx"></script>
 </body>
