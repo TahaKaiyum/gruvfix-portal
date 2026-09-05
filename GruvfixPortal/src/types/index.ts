@@ -18,8 +18,12 @@ export interface Part {
   customer: string;
   partNo: string;
   component: string;
+  material?: string;
+  thickness?: string;
   process: string;
   qtyTarget: number;
+  drawingPath?: string;
+  drawingFileName?: string;
 }
 
 export interface Tool {

@@ -375,7 +375,11 @@ async function syncFromSupabase() {
             partNo: p.part_no,
             component: p.component,
             customer: p.customer,
+            material: p.material,
+            thickness: p.thickness,
             process: p.process,
+            drawingPath: p.drawing_path,
+            drawingFileName: p.drawing_file_name,
             createdBy: p.created_by,
             updatedBy: p.updated_by
         }));
@@ -509,7 +513,11 @@ async function dbSavePart(partObj) {
             part_no: partObj.partNo,
             component: partObj.component,
             customer: partObj.customer,
+            material: partObj.material,
+            thickness: partObj.thickness,
             process: partObj.process,
+            drawing_path: partObj.drawingPath,
+            drawing_file_name: partObj.drawingFileName,
             created_by: partObj.createdBy,
             updated_by: partObj.updatedBy
         });
@@ -523,6 +531,23 @@ async function dbDeletePart(partNo) {
         .delete()
         .eq('part_no', partNo);
     if (error) throw error;
+}
+
+// Uploads a part drawing (PDF/DXF) to the 'part-drawings' storage bucket.
+// Returns { path, fileName } on success, or throws on failure.
+async function uploadPartDrawing(file, partNo) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return null;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${partNo}/${Date.now()}-${safeName}`;
+    const { error } = await supabaseClient.storage.from('part-drawings').upload(path, file, { upsert: true });
+    if (error) throw error;
+    return { path, fileName: file.name };
+}
+
+function getPartDrawingUrl(path) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient || !path) return null;
+    const { data } = supabaseClient.storage.from('part-drawings').getPublicUrl(path);
+    return data ? data.publicUrl : null;
 }
 
 async function dbSaveToolRequest(reqObj) {
@@ -733,7 +758,7 @@ export {
     showToast, openModal, closeModal, openLogDetailsModal, syncFromSupabase,
     dbSaveUser, dbDeleteUser, dbSaveCustomer, dbDeleteCustomer, dbSavePart, dbDeletePart,
     dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbDeleteAllTodayLogs, dbSaveTool, dbDeleteTool, dbSaveSystemSettings,
-    dbSaveMachines
+    dbSaveMachines, uploadPartDrawing, getPartDrawingUrl
 };
 
 // Bind all state functions to window
@@ -753,6 +778,8 @@ window.dbSaveCustomer = dbSaveCustomer;
 window.dbDeleteCustomer = dbDeleteCustomer;
 window.dbSavePart = dbSavePart;
 window.dbDeletePart = dbDeletePart;
+window.uploadPartDrawing = uploadPartDrawing;
+window.getPartDrawingUrl = getPartDrawingUrl;
 window.dbSaveToolRequest = dbSaveToolRequest;
 window.dbSaveLog = dbSaveLog;
 window.dbDeleteLog = dbDeleteLog;

@@ -1091,19 +1091,23 @@ async function saveCustomerModal(e) {
         // Auto-return to Add Part modal if we came from there
         if (window.tempPartModalState) {
             openAddPartModal();
-            
+
             // Restore input values
             document.getElementById('modal-part-no').value = window.tempPartModalState.partNo;
             document.getElementById('modal-part-comp').value = window.tempPartModalState.comp;
-            document.getElementById('modal-part-process').value = window.tempPartModalState.process;
+            document.getElementById('modal-part-material').value = window.tempPartModalState.material;
+            document.getElementById('modal-part-thickness').value = window.tempPartModalState.thickness;
+            setPartProcessSelect(window.tempPartModalState.process);
             document.getElementById('modal-part-index').value = window.tempPartModalState.index;
-            
+            selectedPartFile = window.tempPartModalState.file;
+            document.getElementById('modal-part-file-name').textContent = window.tempPartModalState.fileLabel;
+
             // Select newly added customer
             const select = document.getElementById('modal-part-customer');
             if (select) {
                 select.value = name;
             }
-            
+
             window.tempPartModalState = null;
         }
 
@@ -1162,23 +1166,47 @@ async function deleteCustomer(index) {
 // 6. MASTER DATA: PARTS CRUD
 // ==========================================
 
+const ALLOWED_DRAWING_EXTENSIONS = ['.pdf', '.dxf'];
+const PART_PROCESS_OPTIONS = ['Cutting', 'Milling'];
+let selectedPartFile = null;
+
+// Resets the Default Process select to just the two allowed options, then
+// selects `value`. If `value` is a legacy value that doesn't match either
+// option (real production data has things like "CUTTIG", "MILL", "IDLE"),
+// an extra option is injected so the existing value isn't silently blanked
+// out and overwritten on save.
+function setPartProcessSelect(value) {
+    const select = document.getElementById('modal-part-process');
+    select.innerHTML = '<option value="">Select process...</option>' +
+        PART_PROCESS_OPTIONS.map(p => `<option value="${p}">${p}</option>`).join('');
+
+    if (value && !PART_PROCESS_OPTIONS.includes(value)) {
+        const legacyOpt = document.createElement('option');
+        legacyOpt.value = value;
+        legacyOpt.textContent = `${value} (existing value — pick Cutting or Milling to update)`;
+        select.appendChild(legacyOpt);
+    }
+    select.value = value || '';
+    select.dataset.original = value || '';
+}
+
 function renderPartsTable() {
     const tbody = document.getElementById('admin-parts-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    
+
     const query = document.getElementById('admin-search-parts').value.toLowerCase().trim();
     const filtered = parts.filter(p => p.partNo.toLowerCase().includes(query) || p.component.toLowerCase().includes(query) || p.customer.toLowerCase().includes(query));
-    
+
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-table-state">No parts found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-table-state">No parts found.</td></tr>`;
         return;
     }
-    
+
     filtered.forEach((part) => {
         const mainIndex = parts.findIndex(p => p.partNo === part.partNo && p.customer === part.customer);
         const tr = document.createElement('tr');
-        
+
         const editIcon = `
             <button type="button" class="btn-edit-entry" onclick="openEditPartModal(${mainIndex})" title="Edit part" style="background: none; border: none; padding: 6px; cursor: pointer; color: #4b5563; transition: color 0.15s;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
@@ -1195,12 +1223,20 @@ function renderPartsTable() {
                 </svg>
             </button>
         `;
-        
+
+        const drawingUrl = part.drawingPath && typeof window.getPartDrawingUrl === 'function' ? window.getPartDrawingUrl(part.drawingPath) : null;
+        const drawingCell = drawingUrl
+            ? `<a href="${drawingUrl}" target="_blank" rel="noopener noreferrer" title="${part.drawingFileName || 'Drawing'}">${(part.drawingFileName || 'Drawing').substring(0, 14)}${(part.drawingFileName || '').length > 14 ? '...' : ''}</a>`
+            : '—';
+
         tr.innerHTML = `
             <td><code>${part.partNo}</code></td>
-            <td><strong>${part.component}</strong></td>
             <td>${part.customer}</td>
+            <td><strong>${part.component}</strong></td>
+            <td>${part.material || '—'}</td>
+            <td>${part.thickness || '—'}</td>
             <td>${part.process || '—'}</td>
+            <td>${drawingCell}</td>
             <td>${part.updatedBy || '—'}</td>
             <td style="text-align: right; width: 100px;">
                 ${editIcon}
@@ -1211,13 +1247,49 @@ function renderPartsTable() {
     });
 }
 
+function resetPartFileInput() {
+    selectedPartFile = null;
+    const fileInput = document.getElementById('modal-part-file');
+    if (fileInput) fileInput.value = '';
+}
+
+function handlePartFileSelected() {
+    const fileInput = document.getElementById('modal-part-file');
+    const label = document.getElementById('modal-part-file-name');
+    if (!fileInput || !fileInput.files.length) return;
+
+    const file = fileInput.files[0];
+    const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+
+    if (!ALLOWED_DRAWING_EXTENSIONS.includes(ext)) {
+        showToast('Only PDF or DXF files are allowed.', 'error');
+        fileInput.value = '';
+        selectedPartFile = null;
+        if (label) label.textContent = 'No file selected.';
+        return;
+    }
+
+    selectedPartFile = file;
+    if (label) label.textContent = `Selected: ${file.name}`;
+}
+
 function openAddPartModal() {
+    const errContainer = document.getElementById('modal-part-error');
+    if (errContainer) {
+        errContainer.style.display = 'none';
+        errContainer.textContent = '';
+    }
+
     document.getElementById('modal-part-title').textContent = 'Add New Part';
     document.getElementById('modal-part-index').value = '-1';
     document.getElementById('modal-part-no').value = '';
     document.getElementById('modal-part-comp').value = '';
-    document.getElementById('modal-part-process').value = '';
-    
+    document.getElementById('modal-part-material').value = '';
+    document.getElementById('modal-part-thickness').value = '';
+    setPartProcessSelect('');
+    resetPartFileInput();
+    document.getElementById('modal-part-file-name').textContent = 'No file selected.';
+
     const select = document.getElementById('modal-part-customer');
     select.innerHTML = '';
     customers.forEach(c => {
@@ -1226,18 +1298,30 @@ function openAddPartModal() {
         opt.textContent = c.name;
         select.appendChild(opt);
     });
-    
+
     openModal('modal-part');
 }
 
 function openEditPartModal(index) {
+    const errContainer = document.getElementById('modal-part-error');
+    if (errContainer) {
+        errContainer.style.display = 'none';
+        errContainer.textContent = '';
+    }
+
     const part = parts[index];
     document.getElementById('modal-part-title').textContent = 'Edit Part';
     document.getElementById('modal-part-index').value = index;
     document.getElementById('modal-part-no').value = part.partNo;
     document.getElementById('modal-part-comp').value = part.component;
-    document.getElementById('modal-part-process').value = part.process || '';
-    
+    document.getElementById('modal-part-material').value = part.material || '';
+    document.getElementById('modal-part-thickness').value = part.thickness || '';
+    setPartProcessSelect(part.process || '');
+    resetPartFileInput();
+    document.getElementById('modal-part-file-name').textContent = part.drawingFileName
+        ? `Current: ${part.drawingFileName} (choose a new file to replace)`
+        : 'No file uploaded yet.';
+
     const select = document.getElementById('modal-part-customer');
     select.innerHTML = '';
     customers.forEach(c => {
@@ -1247,32 +1331,95 @@ function openEditPartModal(index) {
         if (c.name === part.customer) opt.selected = true;
         select.appendChild(opt);
     });
-    
+
     openModal('modal-part');
 }
 
 async function savePartModal(e) {
     e.preventDefault();
+
+    const errContainer = document.getElementById('modal-part-error');
+    if (errContainer) {
+        errContainer.style.display = 'none';
+        errContainer.textContent = '';
+    }
+    function showErr(msg) {
+        if (errContainer) {
+            errContainer.textContent = msg;
+            errContainer.style.display = 'block';
+        }
+    }
+
     const index = parseInt(document.getElementById('modal-part-index').value);
     const partNo = document.getElementById('modal-part-no').value.trim();
     const component = document.getElementById('modal-part-comp').value.trim();
     const customer = document.getElementById('modal-part-customer').value;
-    const process = document.getElementById('modal-part-process').value.trim();
-    
+    const material = document.getElementById('modal-part-material').value.trim();
+    const thickness = document.getElementById('modal-part-thickness').value.trim();
+    const processSelect = document.getElementById('modal-part-process');
+    const process = processSelect.value.trim();
+    const processUnchanged = process === (processSelect.dataset.original || '');
+
+    if (!processUnchanged && process && !PART_PROCESS_OPTIONS.includes(process)) {
+        showErr('Default Process must be either Cutting or Milling.');
+        return;
+    }
+
+    const isDuplicatePartNo = parts.some((p, i) => i !== index && p.partNo.trim().toLowerCase() === partNo.toLowerCase());
+    if (isDuplicatePartNo) {
+        showErr(`Duplicate Part No. detected. "${partNo}" already exists — please use a different Part No.`);
+        return;
+    }
+
     // Get active user context
-    const userStr = window.loggedInUser 
-        ? (window.loggedInUser.name || window.loggedInUser.empid || window.loggedInUser.email || 'System') 
+    const userStr = window.loggedInUser
+        ? (window.loggedInUser.name || window.loggedInUser.empid || window.loggedInUser.email || 'System')
         : 'System';
-        
+
     let createdBy = userStr;
     let updatedBy = userStr;
-    
+
     if (index !== -1 && parts[index]) {
         createdBy = parts[index].createdBy || userStr;
     }
-    
-    const newPartObj = { partNo, component, customer, process, createdBy, updatedBy };
-    
+
+    let drawingPath = index !== -1 && parts[index] ? parts[index].drawingPath : null;
+    let drawingFileName = index !== -1 && parts[index] ? parts[index].drawingFileName : null;
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : 'Save Part';
+
+    if (selectedPartFile) {
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+        }
+        try {
+            if (typeof window.uploadPartDrawing === 'function' && window.supabaseClient) {
+                const uploaded = await window.uploadPartDrawing(selectedPartFile, partNo);
+                drawingPath = uploaded.path;
+                drawingFileName = uploaded.fileName;
+            } else {
+                drawingFileName = selectedPartFile.name;
+            }
+        } catch (err) {
+            console.error("Error uploading part drawing:", err);
+            showErr("Failed to upload drawing file. Please try again.");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            return;
+        }
+    }
+
+    const newPartObj = { partNo, component, customer, material, thickness, process, drawingPath, drawingFileName, createdBy, updatedBy };
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+    }
+
     if (index === -1) {
         if (typeof window.dbSavePart !== 'undefined' && window.supabaseClient) {
             try {
@@ -1280,21 +1427,25 @@ async function savePartModal(e) {
                 await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error creating part:", err);
-                window.showToast("Failed to create part in database.", "error");
+                showErr("Failed to create part in database.");
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
                 return;
             }
         } else {
             parts.push(newPartObj);
         }
         showToast('Part created successfully.');
-        
+
         if (activeRowIdForPartDropdown !== null) {
             selectPartOption(activeRowIdForPartDropdown, partNo);
             activeRowIdForPartDropdown = null;
         }
     } else {
         const oldPartNo = parts[index].partNo;
-        
+
         if (typeof window.dbSavePart !== 'undefined' && window.supabaseClient) {
             try {
                 if (oldPartNo !== partNo) {
@@ -1304,20 +1455,34 @@ async function savePartModal(e) {
                 await window.syncFromSupabase();
             } catch (err) {
                 console.error("Error updating part:", err);
-                window.showToast("Failed to update part in database.", "error");
+                showErr("Failed to update part in database.");
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
                 return;
             }
         } else {
             parts[index].partNo = partNo;
             parts[index].component = component;
             parts[index].customer = customer;
+            parts[index].material = material;
+            parts[index].thickness = thickness;
             parts[index].process = process;
-            
+            parts[index].drawingPath = drawingPath;
+            parts[index].drawingFileName = drawingFileName;
+
             cascadePartUpdate(customer, oldPartNo, partNo, component);
         }
         showToast('Part updated successfully.');
     }
-    
+
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+
+    selectedPartFile = null;
     closeModal('modal-part');
     renderPartsTable();
     updateAdminDashboard();
@@ -1342,6 +1507,216 @@ async function deletePart(index) {
         updateAdminDashboard();
         showToast('Part deleted.');
     }
+}
+
+// ==========================================
+// 6a. MASTER DATA: PARTS BULK IMPORT
+// ==========================================
+
+const PART_IMPORT_HEADER_ALIASES = {
+    partNo: ['partno', 'part', 'partnumber'],
+    customer: ['customer', 'customername'],
+    component: ['component', 'description', 'componentdescription'],
+    material: ['material'],
+    thickness: ['thickness'],
+    process: ['defaultprocess', 'process']
+};
+
+function normalizePartImportHeaderKey(str) {
+    return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function mapPartImportRow(rawRow) {
+    const normalized = {};
+    Object.keys(rawRow).forEach(key => {
+        normalized[normalizePartImportHeaderKey(key)] = rawRow[key];
+    });
+
+    const pick = (aliases) => {
+        for (const alias of aliases) {
+            const val = normalized[alias];
+            if (val !== undefined && val !== null && String(val).trim() !== '') {
+                return String(val).trim();
+            }
+        }
+        return '';
+    };
+
+    return {
+        partNo: pick(PART_IMPORT_HEADER_ALIASES.partNo),
+        customer: pick(PART_IMPORT_HEADER_ALIASES.customer),
+        component: pick(PART_IMPORT_HEADER_ALIASES.component),
+        material: pick(PART_IMPORT_HEADER_ALIASES.material),
+        thickness: pick(PART_IMPORT_HEADER_ALIASES.thickness),
+        process: pick(PART_IMPORT_HEADER_ALIASES.process)
+    };
+}
+
+function downloadPartsTemplate() {
+    if (typeof XLSX === 'undefined') {
+        showToast('Excel engine not loaded. Please try again in a moment.', 'error');
+        return;
+    }
+
+    const headers = ['Part No', 'Customer', 'Component/Description', 'Material', 'Thickness', 'Default Process'];
+    const example = ['TM-GASK-04', 'TATA MOTORS', 'Manifold Gasket', 'Mild Steel', '3mm', 'Cutting'];
+
+    // Data lives on its own sheet so a leftover example/instructions row can
+    // never get parsed back in as a bogus part on re-import.
+    const wsData = XLSX.utils.aoa_to_sheet([headers, example]);
+    wsData['!cols'] = [{ wch: 16 }, { wch: 20 }, { wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 16 }];
+
+    const wsNotes = XLSX.utils.aoa_to_sheet([
+        ['Instructions'],
+        ['Fill out the "Parts" sheet - delete the example row before importing.'],
+        ['- Part No must be unique across the whole Parts Master.'],
+        ['- Customer must exactly match an existing name in the Customer master.'],
+        ['- Default Process must be exactly "Cutting" or "Milling", or left blank.']
+    ]);
+    wsNotes['!cols'] = [{ wch: 70 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsData, 'Parts');
+    XLSX.utils.book_append_sheet(wb, wsNotes, 'Instructions');
+    XLSX.writeFile(wb, 'gruvfix_parts_import_template.xlsx');
+    showToast('Template downloaded.');
+}
+
+async function handlePartsImportFile(event) {
+    const fileInput = event.target;
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+
+    if (typeof XLSX === 'undefined') {
+        showToast('Excel engine not loaded. Please try again in a moment.', 'error');
+        fileInput.value = '';
+        return;
+    }
+
+    let rawRows;
+    try {
+        const buffer = await file.arrayBuffer();
+        const wb = XLSX.read(buffer, { type: 'array' });
+        const firstSheet = wb.Sheets[wb.SheetNames[0]];
+        rawRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+    } catch (err) {
+        console.error("Error parsing parts import file:", err);
+        showToast('Could not read that file. Please use the downloaded template.', 'error');
+        fileInput.value = '';
+        return;
+    }
+
+    fileInput.value = '';
+
+    if (!rawRows.length) {
+        showToast('That file has no data rows to import.', 'error');
+        return;
+    }
+
+    const existingPartNos = new Set(parts.map(p => p.partNo.trim().toLowerCase()));
+    const seenInFile = new Set();
+    const validRows = [];
+    const errors = [];
+
+    rawRows.forEach((raw, i) => {
+        const rowNum = i + 2; // header occupies row 1
+        const row = mapPartImportRow(raw);
+
+        // Silently skip fully blank rows (trailing/interstitial empty rows are common in real spreadsheets)
+        const isBlankRow = !row.partNo && !row.customer && !row.component && !row.material && !row.thickness && !row.process;
+        if (isBlankRow) return;
+
+        if (!row.partNo) { errors.push({ row: rowNum, reason: 'Missing Part No.' }); return; }
+        if (!row.customer) { errors.push({ row: rowNum, partNo: row.partNo, reason: 'Missing Customer.' }); return; }
+        if (!row.component) { errors.push({ row: rowNum, partNo: row.partNo, reason: 'Missing Component/Description.' }); return; }
+
+        const custMatch = customers.find(c => c.name.trim().toLowerCase() === row.customer.toLowerCase());
+        if (!custMatch) { errors.push({ row: rowNum, partNo: row.partNo, reason: `Customer "${row.customer}" not found in Customer master.` }); return; }
+
+        if (row.process) {
+            const normalizedProcess = row.process.toLowerCase();
+            if (normalizedProcess === 'cutting') row.process = 'Cutting';
+            else if (normalizedProcess === 'milling') row.process = 'Milling';
+            else { errors.push({ row: rowNum, partNo: row.partNo, reason: 'Default Process must be Cutting or Milling.' }); return; }
+        }
+
+        const key = row.partNo.toLowerCase();
+        if (existingPartNos.has(key)) { errors.push({ row: rowNum, partNo: row.partNo, reason: 'Duplicate Part No. detected — already exists in Parts Master.' }); return; }
+        if (seenInFile.has(key)) { errors.push({ row: rowNum, partNo: row.partNo, reason: 'Duplicate Part No. detected — appears more than once in this file.' }); return; }
+
+        seenInFile.add(key);
+        validRows.push({ ...row, customer: custMatch.name });
+    });
+
+    if (!validRows.length) {
+        showPartsImportResults(0, errors);
+        return;
+    }
+
+    const userStr = window.loggedInUser
+        ? (window.loggedInUser.name || window.loggedInUser.empid || window.loggedInUser.email || 'System')
+        : 'System';
+
+    let importedCount = 0;
+    for (const row of validRows) {
+        const partObj = {
+            partNo: row.partNo,
+            component: row.component,
+            customer: row.customer,
+            material: row.material,
+            thickness: row.thickness,
+            process: row.process,
+            drawingPath: null,
+            drawingFileName: null,
+            createdBy: userStr,
+            updatedBy: userStr
+        };
+        try {
+            if (typeof window.dbSavePart !== 'undefined' && window.supabaseClient) {
+                await window.dbSavePart(partObj);
+            } else {
+                parts.push(partObj);
+            }
+            importedCount++;
+        } catch (err) {
+            console.error("Error importing part", row.partNo, err);
+            errors.push({ row: '—', partNo: row.partNo, reason: 'Database error while saving this row.' });
+        }
+    }
+
+    if (typeof window.syncFromSupabase !== 'undefined' && window.supabaseClient) {
+        await window.syncFromSupabase();
+    }
+
+    renderPartsTable();
+    updateAdminDashboard();
+    showPartsImportResults(importedCount, errors);
+}
+
+function showPartsImportResults(importedCount, errors) {
+    const summaryEl = document.getElementById('parts-import-summary');
+    const errorsEl = document.getElementById('parts-import-errors');
+
+    let summary = `${importedCount} part${importedCount === 1 ? '' : 's'} imported successfully.`;
+    if (errors.length) {
+        summary += ` ${errors.length} row${errors.length === 1 ? '' : 's'} skipped.`;
+    }
+    summaryEl.textContent = summary;
+    summaryEl.style.color = errors.length ? '#b45309' : '#166534';
+
+    errorsEl.innerHTML = errors.length
+        ? errors.map(e => `
+            <div style="padding: 10px 14px; border-bottom: 1px solid var(--border-color); font-size: 13px;">
+                <strong>Row ${e.row}${e.partNo ? ` (${e.partNo})` : ''}:</strong> ${e.reason}
+            </div>
+        `).join('')
+        : '';
+
+    if (importedCount > 0) {
+        showToast(`${importedCount} part(s) imported successfully.`);
+    }
+
+    openModal('modal-part-import');
 }
 
 // ==========================================
@@ -2137,10 +2512,14 @@ function openAddCustomerModalFromPartModal(event) {
     window.tempPartModalState = {
         partNo: document.getElementById('modal-part-no').value,
         comp: document.getElementById('modal-part-comp').value,
+        material: document.getElementById('modal-part-material').value,
+        thickness: document.getElementById('modal-part-thickness').value,
         process: document.getElementById('modal-part-process').value,
-        index: document.getElementById('modal-part-index').value
+        index: document.getElementById('modal-part-index').value,
+        file: selectedPartFile,
+        fileLabel: document.getElementById('modal-part-file-name').textContent
     };
-    
+
     closeModal('modal-part');
     openAddCustomerModal();
 }
@@ -2152,9 +2531,13 @@ function cancelCustomerModal() {
         // Restore input values
         document.getElementById('modal-part-no').value = window.tempPartModalState.partNo;
         document.getElementById('modal-part-comp').value = window.tempPartModalState.comp;
-        document.getElementById('modal-part-process').value = window.tempPartModalState.process;
+        document.getElementById('modal-part-material').value = window.tempPartModalState.material;
+        document.getElementById('modal-part-thickness').value = window.tempPartModalState.thickness;
+        setPartProcessSelect(window.tempPartModalState.process);
         document.getElementById('modal-part-index').value = window.tempPartModalState.index;
-        
+        selectedPartFile = window.tempPartModalState.file;
+        document.getElementById('modal-part-file-name').textContent = window.tempPartModalState.fileLabel;
+
         window.tempPartModalState = null;
     }
 }
@@ -2208,6 +2591,9 @@ window.openAddPartModal = openAddPartModal;
 window.openEditPartModal = openEditPartModal;
 window.savePartModal = savePartModal;
 window.deletePart = deletePart;
+window.handlePartFileSelected = handlePartFileSelected;
+window.downloadPartsTemplate = downloadPartsTemplate;
+window.handlePartsImportFile = handlePartsImportFile;
 window.getFilteredReports = getFilteredReports;
 window.renderReportsPreview = renderReportsPreview;
 window.hookReportFilters = hookReportFilters;
