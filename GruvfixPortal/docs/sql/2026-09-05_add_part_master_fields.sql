@@ -18,14 +18,18 @@ on conflict (id) do nothing;
 -- 3. Storage policies. The app authenticates with the anon key only (no
 -- Supabase Auth session), so these mirror the permissive access already
 -- granted to the anon key on the `parts` table itself.
-create policy if not exists "Public read access to part drawings"
+-- (CREATE POLICY has no IF NOT EXISTS in Postgres, so drop-then-create instead.)
+drop policy if exists "Public read access to part drawings" on storage.objects;
+create policy "Public read access to part drawings"
 on storage.objects for select
 using ( bucket_id = 'part-drawings' );
 
-create policy if not exists "Public upload access to part drawings"
+drop policy if exists "Public upload access to part drawings" on storage.objects;
+create policy "Public upload access to part drawings"
 on storage.objects for insert
 with check ( bucket_id = 'part-drawings' );
 
-create policy if not exists "Public update access to part drawings"
+drop policy if exists "Public update access to part drawings" on storage.objects;
+create policy "Public update access to part drawings"
 on storage.objects for update
 using ( bucket_id = 'part-drawings' );
