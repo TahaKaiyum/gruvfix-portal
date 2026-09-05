@@ -1121,6 +1121,23 @@
                         </div>
                         <div class="header-action-row-horizontal">
                             <input type="text" id="admin-search-parts" class="table-search-input" placeholder="Search by part #, name or customer" oninput="renderPartsTable()">
+                            <input type="file" id="parts-import-input" accept=".xlsx,.xls,.csv" style="display: none;" onchange="handlePartsImportFile(event)">
+                            <button type="button" class="btn-export-csv" onclick="downloadPartsTemplate()" title="Download a spreadsheet template for bulk import">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Download Template
+                            </button>
+                            <button type="button" class="btn-export-csv" onclick="document.getElementById('parts-import-input').click()" title="Bulk import parts from a spreadsheet">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                Import Parts
+                            </button>
                             <button type="button" class="btn-add-user-header" onclick="openAddPartModal()">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="12" y1="5" x2="12" y2="19"/>
@@ -1136,9 +1153,12 @@
                             <thead>
                                 <tr>
                                     <th>Part #</th>
-                                    <th>Component</th>
                                     <th>Customer</th>
+                                    <th>Component/Description</th>
+                                    <th>Material</th>
+                                    <th>Thickness</th>
                                     <th>Default Process</th>
+                                    <th>Drawing</th>
                                     <th>Last Modified By</th>
                                     <th style="text-align: right;">Actions</th>
                                 </tr>
@@ -1558,13 +1578,11 @@
             <form id="form-part" onsubmit="savePartModal(event)">
                 <input type="hidden" id="modal-part-index">
                 <div class="modal-body">
+                    <!-- Validation and Database Error Container -->
+                    <div id="modal-part-error" style="display: none; color: #ef4444; background-color: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.15); padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13px; font-weight: 500; font-family: var(--font-sans);"></div>
                     <div class="form-group">
                         <label>PART #</label>
                         <input type="text" id="modal-part-no" placeholder="e.g. TM-GASK-04" required>
-                    </div>
-                    <div class="form-group">
-                        <label>COMPONENT NAME</label>
-                        <input type="text" id="modal-part-comp" placeholder="e.g. Manifold Gasket" required>
                     </div>
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -1582,8 +1600,29 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>COMPONENT / DESCRIPTION</label>
+                        <input type="text" id="modal-part-comp" placeholder="e.g. Manifold Gasket" required>
+                    </div>
+                    <div class="form-group">
+                        <label>MATERIAL</label>
+                        <input type="text" id="modal-part-material" placeholder="e.g. Mild Steel">
+                    </div>
+                    <div class="form-group">
+                        <label>THICKNESS</label>
+                        <input type="text" id="modal-part-thickness" placeholder="e.g. 3mm">
+                    </div>
+                    <div class="form-group">
                         <label>DEFAULT PROCESS</label>
-                        <input type="text" id="modal-part-process" placeholder="e.g. Punching">
+                        <select id="modal-part-process">
+                            <option value="">Select process...</option>
+                            <option value="Cutting">Cutting</option>
+                            <option value="Milling">Milling</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>UPLOAD DRAWING (PDF or DXF)</label>
+                        <input type="file" id="modal-part-file" accept=".pdf,.dxf,application/pdf" onchange="handlePartFileSelected()">
+                        <span id="modal-part-file-name" style="display: block; margin-top: 6px; font-size: 12px; color: #6b7280;">No file selected.</span>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1591,6 +1630,23 @@
                     <button type="submit" class="btn-save">Save Part</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Parts Bulk Import Results Modal -->
+    <div id="modal-part-import" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Import Results</h3>
+                <button type="button" class="btn-close-modal" onclick="closeModal('modal-part-import')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="parts-import-summary" style="font-size: 14px; font-weight: 600; margin-bottom: 14px;"></div>
+                <div id="parts-import-errors" style="max-height: 320px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-save" onclick="closeModal('modal-part-import')">Close</button>
+            </div>
         </div>
     </div>
 

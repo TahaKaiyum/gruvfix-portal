@@ -1546,7 +1546,18 @@ body {
         flex-direction: column;
         gap: 16px;
     }
-    
+
+    .header-action-row-horizontal {
+        width: 100%;
+    }
+
+    .header-action-row-horizontal .btn-add-user-header,
+    .header-action-row-horizontal .btn-export-csv {
+        flex: 1;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
     .mini-stats-grid {
         width: 100%;
         justify-content: space-between;
@@ -2402,6 +2413,7 @@ input:checked + .slider-toggle:before {
 .header-action-row-horizontal {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 12px;
 }
 
