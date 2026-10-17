@@ -63,6 +63,16 @@ function getTodayDateString() {
     return `${yyyy}-${mm}-${dd}`;
 }
 
+// Formats a work-entry duration in minutes as e.g. "1h 30m", "45m", "2h".
+function formatDuration(minutes) {
+    const total = Number(minutes);
+    if (!total || total < 0) return '—';
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h && m) return `${h}h ${m}m`;
+    return h ? `${h}h` : `${m}m`;
+}
+
 function getRelativeDateString(offsetDays) {
     const d = new Date();
     d.setDate(d.getDate() - offsetDays);
@@ -194,7 +204,7 @@ function openLogDetailsModal(id) {
     if (!entry) return;
     
     document.getElementById('detail-date').textContent = entry.date;
-    document.getElementById('detail-hour').textContent = entry.hour;
+    document.getElementById('detail-hour').textContent = formatDuration(entry.timeMinutes);
     document.getElementById('detail-shift').textContent = entry.shift;
     document.getElementById('detail-employee').textContent = entry.employee || 'EMP001';
     document.getElementById('detail-customer').textContent = entry.customer;
@@ -429,6 +439,8 @@ async function syncFromSupabase() {
             id: l.id,
             date: l.date,
             hour: l.hour,
+            // Entries saved before per-row time existed are treated as 60 min
+            timeMinutes: l.time_minutes != null ? l.time_minutes : 60,
             customer: l.customer,
             part: l.part,
             component: l.component,
@@ -594,7 +606,8 @@ async function dbSaveLog(logObj) {
         .upsert({
             id: logObj.id,
             date: logObj.date,
-            hour: logObj.hour,
+            hour: logObj.hour || null,
+            time_minutes: logObj.timeMinutes,
             customer: logObj.customer,
             part: logObj.part,
             component: logObj.component,
@@ -754,7 +767,7 @@ async function dbSaveMachines(machinesList) {
 }
 
 export {
-    getTodayDateString, getRelativeDateString, cascadeCustomerUpdate, cascadePartUpdate, cascadeEmployeeUpdate,
+    getTodayDateString, formatDuration, getRelativeDateString, cascadeCustomerUpdate, cascadePartUpdate, cascadeEmployeeUpdate,
     showToast, openModal, closeModal, openLogDetailsModal, syncFromSupabase,
     dbSaveUser, dbDeleteUser, dbSaveCustomer, dbDeleteCustomer, dbSavePart, dbDeletePart,
     dbSaveToolRequest, dbSaveLog, dbDeleteLog, dbDeleteAllTodayLogs, dbSaveTool, dbDeleteTool, dbSaveSystemSettings,
@@ -763,6 +776,7 @@ export {
 
 // Bind all state functions to window
 window.getTodayDateString = getTodayDateString;
+window.formatDuration = formatDuration;
 window.getRelativeDateString = getRelativeDateString;
 window.cascadeCustomerUpdate = cascadeCustomerUpdate;
 window.cascadePartUpdate = cascadePartUpdate;

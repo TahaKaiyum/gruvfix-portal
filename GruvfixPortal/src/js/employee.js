@@ -138,6 +138,14 @@ function addPartRow() {
                 <option value="Machining">Machining</option>
             </select>
         </div>
+        <div class="col-time">
+            <div class="time-input-group">
+                <input type="number" id="time-h-input-${rowId}" min="0" step="1" placeholder="0" oninput="handleTimeChange(${rowId})" title="Hours">
+                <span>h</span>
+                <input type="number" id="time-m-input-${rowId}" min="0" max="59" step="1" placeholder="0" oninput="handleTimeChange(${rowId})" title="Minutes">
+                <span>m</span>
+            </div>
+        </div>
         <div class="col-qty">
             <input type="number" id="qty-input-${rowId}" value="1" min="1" oninput="handleQtyChange(${rowId})" required>
         </div>
@@ -186,6 +194,7 @@ function addPartRow() {
         partNo: '',
         component: '',
         qty: 1,
+        timeMinutes: 0,
         fileName: '—'
     });
     
@@ -215,6 +224,23 @@ function handleQtyChange(rowId) {
     const row = partRows.find(r => r.id === rowId);
     if (row) {
         row.qty = qty;
+        updateSummary();
+    }
+}
+
+// Reads the hours + minutes inputs of a row and returns the total in minutes.
+function readRowMinutes(rowId) {
+    const hInput = document.getElementById(`time-h-input-${rowId}`);
+    const mInput = document.getElementById(`time-m-input-${rowId}`);
+    const h = hInput ? parseInt(hInput.value) || 0 : 0;
+    const m = mInput ? parseInt(mInput.value) || 0 : 0;
+    return h * 60 + m;
+}
+
+function handleTimeChange(rowId) {
+    const row = partRows.find(r => r.id === rowId);
+    if (row) {
+        row.timeMinutes = readRowMinutes(rowId);
         updateSummary();
     }
 }
@@ -251,9 +277,10 @@ function handleFileSelected(rowId) {
 function updateSummary() {
     const totalRows = partRows.length;
     const totalQty = partRows.reduce((acc, row) => acc + row.qty, 0);
-    
+    const totalMinutes = partRows.reduce((acc, row) => acc + (row.timeMinutes || 0), 0);
+
     const summaryText = document.getElementById('parts-summary-text');
-    if (summaryText) summaryText.textContent = `${totalRows} row${totalRows > 1 ? 's' : ''} • ${totalQty} total qty`;
+    if (summaryText) summaryText.textContent = `${totalRows} row${totalRows > 1 ? 's' : ''} • ${totalQty} total qty • ${totalMinutes ? formatDuration(totalMinutes) : '0m'} total time`;
     
     const saveBtn = document.getElementById('btn-save-entries');
     if (saveBtn) {
@@ -268,68 +295,9 @@ function updateSummary() {
     }
 }
 
-function populateHourSlots() {
-    const shiftSelect = document.getElementById('entry-shift');
-    const hourSelect = document.getElementById('entry-hour');
-    if (!shiftSelect || !hourSelect) return;
-
-    const selectedShift = shiftSelect.value;
-    const prevValue = hourSelect.value;
-
-    let slots = [];
-    if (selectedShift.includes('Night Shift')) {
-        slots = [
-            "20:00 - 21:00",
-            "21:00 - 22:00",
-            "22:00 - 23:00",
-            "23:00 - 00:00",
-            "00:00 - 01:00",
-            "01:00 - 02:00",
-            "02:00 - 03:00",
-            "03:00 - 04:00",
-            "04:00 - 05:00",
-            "05:00 - 06:00",
-            "06:00 - 07:00",
-            "07:00 - 08:00"
-        ];
-    } else {
-        slots = [
-            "08:00 - 09:00",
-            "09:00 - 10:00",
-            "10:00 - 11:00",
-            "11:00 - 12:00",
-            "12:00 - 13:00",
-            "13:00 - 14:00",
-            "14:00 - 15:00",
-            "15:00 - 16:00",
-            "16:00 - 17:00",
-            "17:00 - 18:00",
-            "18:00 - 19:00",
-            "19:00 - 20:00"
-        ];
-    }
-
-    hourSelect.innerHTML = '<option value="" disabled selected>Select hour</option>';
-    slots.forEach(slot => {
-        const opt = document.createElement('option');
-        opt.value = slot;
-        opt.textContent = slot;
-        hourSelect.appendChild(opt);
-    });
-
-    if (slots.includes(prevValue)) {
-        hourSelect.value = prevValue;
-    }
-}
-
 function resetForm() {
     const shiftSelect = document.getElementById('entry-shift');
     if (shiftSelect) shiftSelect.selectedIndex = 0;
-    
-    populateHourSlots();
-    
-    const hourSelect = document.getElementById('entry-hour');
-    if (hourSelect) hourSelect.selectedIndex = 0;
     
     const container = document.getElementById('part-rows-container');
     if (container) container.innerHTML = '';
@@ -354,10 +322,8 @@ async function saveWorkEntries(e) {
     
     const date = document.getElementById('entry-date').value;
     const shift = document.getElementById('entry-shift').value;
-    const hour = document.getElementById('entry-hour').value;
     
     if (!date) { showToast('Please select a valid date.', 'error'); return; }
-    if (!hour) { showToast('Please pick an hour slot.', 'error'); return; }
     
     // Validation
     let validationFailed = false;
@@ -376,6 +342,15 @@ async function saveWorkEntries(e) {
             showToast(`Row ${row.id}: Quantity must be 1 or more.`, 'error');
             validationFailed = true;
         }
+        const hVal = parseInt(document.getElementById(`time-h-input-${row.id}`).value) || 0;
+        const mVal = parseInt(document.getElementById(`time-m-input-${row.id}`).value) || 0;
+        if (hVal < 0 || mVal < 0 || mVal > 59) {
+            showToast(`Row ${row.id}: Enter hours and minutes (0-59) for the time taken.`, 'error');
+            validationFailed = true;
+        } else if (hVal * 60 + mVal <= 0) {
+            showToast(`Row ${row.id}: Enter the time taken to complete this part.`, 'error');
+            validationFailed = true;
+        }
     });
     
     if (validationFailed) return;
@@ -390,11 +365,12 @@ async function saveWorkEntries(e) {
         const machine = document.getElementById(`mach-select-${row.id}`).value;
         const status = document.getElementById(`status-select-${row.id}`).value;
         const qtyVal = parseInt(document.getElementById(`qty-input-${row.id}`).value) || 1;
+        const timeMinutes = readRowMinutes(row.id);
         
         const newEntry = {
             id: rowId,
             date: date,
-            hour: hour,
+            timeMinutes: timeMinutes,
             customer: rowCust,
             part: rowPart,
             component: row.component || '—',
@@ -496,7 +472,7 @@ function renderTodayEntriesTable() {
         }
         
         tr.innerHTML = `
-            <td><strong>${entry.hour}</strong></td>
+            <td><strong>${formatDuration(entry.timeMinutes)}</strong></td>
             <td>${entry.customer}</td>
             <td><code>${entry.part}</code></td>
             <td>${entry.process}</td>
@@ -618,7 +594,7 @@ function renderHistoryTable() {
         
         tr.innerHTML = `
             <td>${entry.date}</td>
-            <td><strong>${entry.hour}</strong></td>
+            <td><strong>${formatDuration(entry.timeMinutes)}</strong></td>
             <td>${entry.customer}</td>
             <td><code>${entry.part}</code></td>
             <td>${entry.process}</td>
@@ -675,9 +651,9 @@ async function clearAllTodayEntries() {
 // Export functions for ESM imports
 export {
     switchDashboardTab, updateEmployeeStats, addPartRow, deletePartRow,
-    handleQtyChange, triggerAttachment, handleFileSelected,
+    handleQtyChange, handleTimeChange, triggerAttachment, handleFileSelected,
     resetForm, saveWorkEntries, renderTodayEntriesTable, deleteTodayEntry, clearAllTodayEntries, renderHistoryTable,
-    populateHourSlots, updateSummary
+    updateSummary
 };
 
 // Bind functions to window for backward compatibility
@@ -686,6 +662,7 @@ window.updateEmployeeStats = updateEmployeeStats;
 window.addPartRow = addPartRow;
 window.deletePartRow = deletePartRow;
 window.handleQtyChange = handleQtyChange;
+window.handleTimeChange = handleTimeChange;
 window.triggerAttachment = triggerAttachment;
 window.handleFileSelected = handleFileSelected;
 window.resetForm = resetForm;
@@ -694,17 +671,4 @@ window.renderTodayEntriesTable = renderTodayEntriesTable;
 window.deleteTodayEntry = deleteTodayEntry;
 window.clearAllTodayEntries = clearAllTodayEntries;
 window.renderHistoryTable = renderHistoryTable;
-window.populateHourSlots = populateHourSlots;
 window.updateSummary = updateSummary;
-
-// Initialize listeners on DOM ready
-window.addEventListener('DOMContentLoaded', () => {
-    const shiftSelect = document.getElementById('entry-shift');
-    if (shiftSelect) {
-        shiftSelect.addEventListener('change', populateHourSlots);
-        populateHourSlots(); // Seed initial day shift hour slots
-    }
-});
-
-
-

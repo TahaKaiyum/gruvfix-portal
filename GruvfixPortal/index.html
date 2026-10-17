@@ -360,7 +360,7 @@
                     <div class="card form-card">
                         <form id="work-entry-form" onsubmit="saveWorkEntries(event)">
                             <!-- General Slot Selectors -->
-                            <div class="form-grid-3">
+                            <div class="form-grid-2">
                                 <div class="form-group">
                                     <label>DATE</label>
                                     <div class="input-with-icon">
@@ -382,33 +382,11 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group">
-                                    <label>HOUR SLOT</label>
-                                    <select id="entry-hour" required>
-                                        <option value="" disabled selected>Select hour</option>
-                                        <option value="08:00 - 09:00">08:00 - 09:00</option>
-                                        <option value="09:00 - 10:00">09:00 - 10:00</option>
-                                        <option value="10:00 - 11:00">10:00 - 11:00</option>
-                                        <option value="11:00 - 12:00">11:00 - 12:00</option>
-                                        <option value="12:00 - 13:00">12:00 - 13:00</option>
-                                        <option value="13:00 - 14:00">13:00 - 14:00</option>
-                                        <option value="14:00 - 15:00">14:00 - 15:00</option>
-                                        <option value="15:00 - 16:00">15:00 - 16:00</option>
-                                        <option value="16:00 - 17:00">16:00 - 17:00</option>
-                                        <option value="17:00 - 18:00">17:00 - 18:00</option>
-                                        <option value="18:00 - 19:00">18:00 - 19:00</option>
-                                        <option value="19:00 - 20:00">19:00 - 20:00</option>
-                                    </select>
-                                </div>
                             </div>
 
                             <!-- Parts Log Section -->
                             <div class="parts-section">
-                                <div class="parts-section-header">
-                                    <div>
-                                        <h4>PARTS IN THIS HOUR</h4>
-                                        <p>Add multiple part numbers under the same hour slot.</p>
-                                    </div>
+                                <div class="parts-section-header" style="justify-content: flex-end;">
                                     <button type="button" class="btn-add-part" onclick="addPartRow()">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -423,6 +401,7 @@
                                     <div class="col-part">PART #</div>
                                     <div class="col-comp">CUSTOMER</div>
                                     <div class="col-proc">PROCESS</div>
+                                    <div class="col-time">TIME (H : M)</div>
                                     <div class="col-qty">QTY</div>
                                     <div class="col-mach">MACHINE</div>
                                     <div class="col-status">STATUS</div>
@@ -472,7 +451,7 @@
                             <table class="data-table" id="today-entries-table">
                                 <thead>
                                     <tr>
-                                        <th>Hour</th>
+                                        <th>Time</th>
                                         <th>Customer</th>
                                         <th>Part</th>
                                         <th>Process</th>
@@ -525,7 +504,7 @@
                                 <thead>
                                     <tr>
                                         <th>Date</th>
-                                        <th>Hour</th>
+                                        <th>Time</th>
                                         <th>Customer</th>
                                         <th>Part</th>
                                         <th>Process</th>
@@ -989,7 +968,7 @@
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Hour</th>
+                                    <th>Time</th>
                                     <th>Shift</th>
                                     <th>Employee</th>
                                     <th>Customer</th>
@@ -1357,7 +1336,7 @@
                                 <thead>
                                     <tr>
                                         <th>Date</th>
-                                        <th>Hour</th>
+                                        <th>Time</th>
                                         <th>Employee</th>
                                         <th>Customer</th>
                                         <th>Part</th>
@@ -1664,7 +1643,7 @@
                         <span class="detail-val" id="detail-date">—</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">HOUR SLOT</span>
+                        <span class="detail-label">TIME TAKEN</span>
                         <span class="detail-val" id="detail-hour">—</span>
                     </div>
                     <div class="detail-row">

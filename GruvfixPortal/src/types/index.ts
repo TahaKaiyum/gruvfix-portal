@@ -47,7 +47,8 @@ export interface ToolRequest {
 export interface LogEntry {
   id?: number;
   date: string;
-  hour: string;
+  hour?: string | null;
+  timeMinutes: number;
   customer: string;
   part: string;
   component: string;
