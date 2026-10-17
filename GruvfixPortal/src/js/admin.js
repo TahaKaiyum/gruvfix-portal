@@ -372,7 +372,7 @@ function renderAdminEntriesTable() {
         
         tr.innerHTML = `
             <td>${entry.date}</td>
-            <td><strong>${entry.hour}</strong></td>
+            <td><strong>${formatDuration(entry.timeMinutes)}</strong></td>
             <td>${shiftLabel}</td>
             <td><code>${entry.employee || 'EMP001'}</code></td>
             <td>${entry.customer}</td>
@@ -1975,7 +1975,7 @@ function renderReportsPreview() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${e.date}</td>
-            <td><strong>${e.hour}</strong></td>
+            <td><strong>${formatDuration(e.timeMinutes)}</strong></td>
             <td><code>${e.employee || 'EMP001'}</code></td>
             <td>${e.customer}</td>
             <td><code>${e.part}</code></td>
@@ -2025,9 +2025,9 @@ function exportReport(format) {
     const today = new Date().toISOString().split('T')[0];
     
     if (format === 'csv') {
-        let csv = 'Date,Hour,Employee,Customer,Part #,Component,Process,Qty,Status,Machine,File\n';
+        let csv = 'Date,Time (min),Employee,Customer,Part #,Component,Process,Qty,Status,Machine,File\n';
         filtered.forEach(e => {
-            csv += `"${e.date}","${e.hour}","${e.employee || 'EMP001'}","${e.customer}","${e.part}","${e.component}","${e.process}","${e.qty}","${e.status}","${e.machine}","${e.file}"\n`;
+            csv += `"${e.date}","${_entryMinutes(e)}","${e.employee || 'EMP001'}","${e.customer}","${e.part}","${e.component}","${e.process}","${e.qty}","${e.status}","${e.machine}","${e.file}"\n`;
         });
         downloadCSV(csv, `gruvfix_report_${today}.csv`);
         showToast('Report exported successfully as CSV.');
@@ -2051,7 +2051,7 @@ function exportReport(format) {
             tableRows += `
                 <tr>
                     <td>${e.date}</td>
-                    <td>${e.hour}</td>
+                    <td>${formatDuration(e.timeMinutes)}</td>
                     <td>${e.employee || 'EMP001'}</td>
                     <td>${e.customer}</td>
                     <td>${e.part}</td>
@@ -2116,7 +2116,7 @@ function exportReport(format) {
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Hour</th>
+                            <th>Time</th>
                             <th>Employee</th>
                             <th>Customer</th>
                             <th>Part #</th>
@@ -2153,10 +2153,15 @@ function exportReport(format) {
 // 8b. EXCEL WORKBOOK + DASHBOARD BUILDER
 // ==========================================
 
-// One "man-hour" = one distinct (employee + date + hour-slot) combination,
-// regardless of how many part rows were logged inside that slot.
-function _slotKey(e) {
-    return `${e.employee || 'EMP001'}|${e.date}|${e.hour}`;
+// Time logged against an entry, in minutes. Entries saved before per-row
+// time was introduced carry no value and count as one hour.
+function _entryMinutes(e) {
+    const m = Number(e.timeMinutes);
+    return m > 0 ? m : 60;
+}
+
+function _toHours(minutes) {
+    return _round1(minutes / 60);
 }
 
 function _employeeName(empid) {
@@ -2176,8 +2181,8 @@ function _round1(n) {
     return Math.round(n * 10) / 10;
 }
 
-// Slots available in a single full shift (see populateHourSlots in employee.js)
-const SHIFT_SLOT_COUNT = 12;
+// Length of a single full shift, in hours
+const SHIFT_HOURS = 12;
 
 function exportReportWorkbook(filtered, today) {
     const wb = XLSX.utils.book_new();
@@ -2187,7 +2192,8 @@ function exportReportWorkbook(filtered, today) {
         const el = document.getElementById(id);
         return el && el.value ? el.value : 'All';
     };
-    const totalHours = new Set(filtered.map(_slotKey)).size;
+    const totalMinutes = filtered.reduce((s, e) => s + _entryMinutes(e), 0);
+    const totalHours = _toHours(totalMinutes);
     const totalQty = filtered.reduce((s, e) => s + (Number(e.qty) || 0), 0);
     const uniqueCustomers = new Set(filtered.map(e => e.customer)).size;
     const uniqueEmployees = new Set(filtered.map(e => e.employee || 'EMP001')).size;
@@ -2208,7 +2214,7 @@ function exportReportWorkbook(filtered, today) {
         [],
         ['Totals'],
         ['Detail rows', filtered.length],
-        ['Hours worked (distinct hour-slots)', totalHours],
+        ['Hours worked', totalHours],
         ['Quantity produced', totalQty],
         ['Customers touched', uniqueCustomers],
         ['Employees active', uniqueEmployees]
@@ -2217,11 +2223,11 @@ function exportReportWorkbook(filtered, today) {
     wsSummary['!cols'] = [{ wch: 34 }, { wch: 26 }];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
 
-    // ---- Sheet 2: Work Log (raw hourly detail) ----
-    const logHeader = ['Date', 'Hour', 'Employee ID', 'Employee', 'Customer', 'Part #',
+    // ---- Sheet 2: Work Log (raw detail) ----
+    const logHeader = ['Date', 'Time (min)', 'Employee ID', 'Employee', 'Customer', 'Part #',
         'Component', 'Process', 'Qty', 'Status', 'Machine', 'Shift', 'File'];
     const logRows = filtered.map(e => [
-        e.date, e.hour, e.employee || 'EMP001', _employeeName(e.employee || 'EMP001'),
+        e.date, _entryMinutes(e), e.employee || 'EMP001', _employeeName(e.employee || 'EMP001'),
         e.customer, e.part, e.component, e.process, Number(e.qty) || 0,
         e.status, e.machine, _shiftLabel(e.shift), e.file
     ]);
@@ -2233,8 +2239,8 @@ function exportReportWorkbook(filtered, today) {
     const byCustomer = {};
     filtered.forEach(e => {
         const key = e.customer || '—';
-        if (!byCustomer[key]) byCustomer[key] = { slots: new Set(), qty: 0, entries: 0 };
-        byCustomer[key].slots.add(_slotKey(e));
+        if (!byCustomer[key]) byCustomer[key] = { minutes: 0, qty: 0, entries: 0 };
+        byCustomer[key].minutes += _entryMinutes(e);
         byCustomer[key].qty += Number(e.qty) || 0;
         byCustomer[key].entries += 1;
     });
@@ -2242,16 +2248,15 @@ function exportReportWorkbook(filtered, today) {
     const custRows = Object.keys(byCustomer)
         .map(name => {
             const c = byCustomer[name];
-            const hrs = c.slots.size;
-            return [name, hrs, c.entries, c.qty, totalHours ? _round1((hrs / totalHours) * 100) : 0];
+            const hrs = _toHours(c.minutes);
+            return [name, hrs, c.entries, c.qty, totalMinutes ? _round1((c.minutes / totalMinutes) * 100) : 0];
         })
         .sort((a, b) => b[1] - a[1]);
     const custTotal = ['TOTAL', totalHours,
         custRows.reduce((s, r) => s + r[2], 0),
         custRows.reduce((s, r) => s + r[3], 0),
         custRows.length ? 100 : 0];
-    const custNote = ['Note: an hour-slot split across two customers counts as an hour for each, so column may exceed TOTAL.'];
-    const wsCust = XLSX.utils.aoa_to_sheet([custHeader, ...custRows, [], custTotal, [], custNote]);
+    const wsCust = XLSX.utils.aoa_to_sheet([custHeader, ...custRows, [], custTotal]);
     wsCust['!cols'] = [{ wch: 24 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 12 }];
     XLSX.utils.book_append_sheet(wb, wsCust, 'Hours by Customer');
 
@@ -2261,9 +2266,9 @@ function exportReportWorkbook(filtered, today) {
         const empid = e.employee || 'EMP001';
         const key = `${empid}|${e.date}`;
         if (!byEmpDay[key]) {
-            byEmpDay[key] = { empid, date: e.date, shift: e.shift, hours: new Set(), qty: 0, entries: 0 };
+            byEmpDay[key] = { empid, date: e.date, shift: e.shift, minutes: 0, qty: 0, entries: 0 };
         }
-        byEmpDay[key].hours.add(e.hour);
+        byEmpDay[key].minutes += _entryMinutes(e);
         byEmpDay[key].qty += Number(e.qty) || 0;
         byEmpDay[key].entries += 1;
     });
@@ -2271,18 +2276,18 @@ function exportReportWorkbook(filtered, today) {
         'Shift Hours', 'Coverage %', 'Missing Hours', 'Qty Produced', 'Entries'];
     const empRows = Object.values(byEmpDay)
         .map(d => {
-            const hrs = d.hours.size;
+            const hrs = _toHours(d.minutes);
             return [
                 d.empid, _employeeName(d.empid), d.date, _shiftLabel(d.shift), hrs,
-                SHIFT_SLOT_COUNT, _round1((hrs / SHIFT_SLOT_COUNT) * 100),
-                Math.max(0, SHIFT_SLOT_COUNT - hrs), d.qty, d.entries
+                SHIFT_HOURS, _round1((d.minutes / (SHIFT_HOURS * 60)) * 100),
+                _toHours(Math.max(0, SHIFT_HOURS * 60 - d.minutes)), d.qty, d.entries
             ];
         })
         .sort((a, b) => (a[1] + a[2]).localeCompare(b[1] + b[2]));
-    const empHoursTotal = empRows.reduce((s, r) => s + r[4], 0);
-    const empTotal = ['TOTAL', '', '', '', empHoursTotal, '',
-        empRows.length ? _round1((empHoursTotal / (empRows.length * SHIFT_SLOT_COUNT)) * 100) : 0,
-        empRows.reduce((s, r) => s + r[7], 0),
+    const empMinutesTotal = Object.values(byEmpDay).reduce((s, d) => s + d.minutes, 0);
+    const empTotal = ['TOTAL', '', '', '', _toHours(empMinutesTotal), '',
+        empRows.length ? _round1((empMinutesTotal / (empRows.length * SHIFT_HOURS * 60)) * 100) : 0,
+        _round1(empRows.reduce((s, r) => s + r[7], 0)),
         empRows.reduce((s, r) => s + r[8], 0),
         empRows.reduce((s, r) => s + r[9], 0)];
     const wsEmp = XLSX.utils.aoa_to_sheet([empHeader, ...empRows, [], empTotal]);

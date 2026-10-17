@@ -715,6 +715,13 @@ body {
     margin-bottom: 24px;
 }
 
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
 
 /* INPUT ICON STYLING */
 .input-with-icon {
@@ -816,15 +823,33 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.col-part { width: 16%; }
-.col-comp { width: 18%; }
-.col-proc { width: 12%; }
-.col-qty { width: 8%; }
+.col-part { width: 15%; }
+.col-comp { width: 15%; }
+.col-proc { width: 10%; }
+.col-time { width: 12%; }
+.col-qty { width: 7%; }
 .col-mach { width: 10%; }
-.col-status { width: 12%; }
-.col-remarks { width: 12%; }
-.col-attach { width: 10%; }
-.col-actions { width: 4%; text-align: center; }
+.col-status { width: 10%; }
+.col-remarks { width: 10%; }
+.col-attach { width: 8%; }
+.col-actions { width: 3%; text-align: center; }
+
+/* HOURS + MINUTES INPUT IN ROW */
+.time-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.time-input-group input {
+    min-width: 0;
+    text-align: center;
+}
+
+.time-input-group span {
+    font-size: 12px;
+    color: var(--text-light);
+}
 
 .part-row select,
 .part-row input {
@@ -1568,7 +1593,8 @@ body {
         min-width: 0;
     }
     
-    .form-grid-4 {
+    .form-grid-4,
+    .form-grid-2 {
         grid-template-columns: 1fr;
     }
     
@@ -1611,6 +1637,7 @@ body {
     .part-row .col-part:before { content: "Part #"; }
     .part-row .col-comp:before { content: "Customer"; }
     .part-row .col-proc:before { content: "Process"; }
+    .part-row .col-time:before { content: "Time (hours : minutes)"; }
     .part-row .col-qty:before { content: "Quantity"; }
     .part-row .col-mach:before { content: "Machine"; }
     .part-row .col-status:before { content: "Status"; }

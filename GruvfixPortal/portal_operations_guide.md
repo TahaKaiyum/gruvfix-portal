@@ -28,15 +28,15 @@ Use the pre-configured accounts below to log in or test the portal:
 When logged in as an Employee (e.g., `EMP001`), you will see the **Shop Floor** dashboard.
 
 ### 📝 A. Logging Production Hours ("New Entry")
-Use this tab to log your hourly work output for your shift.
+Use this tab to log your work output for your shift.
 
-1. **Set General Info**: Select the **Date**, your active **Shift** (Day Shift or Night Shift), and the **Hour Slot** (e.g., `09:00 - 10:00`).
-2. **Add Part Rows**: You can log multiple parts in a single hour. Click **`+ Add Row`** at the bottom of the form to append rows.
+1. **Set General Info**: Select the **Date** and your active **Shift** (Day Shift or Night Shift).
+2. **Add Part Rows**: Click **`+ Add part`** to add a row for each part you worked on.
 3. **Select Part & Customer**:
    * Click **`Select Part #`** to open the search dropdown. Type to filter, and select a part. This automatically fills the component name and process.
    * Click **`Select Customer`** to choose the client.
    * *Adding New Records*: If the part or customer is not in the list, click the green **`+ Add New Customer`** or **`+ Add New Part`** button inside the dropdown. Fill in the modal details, and the new item will save and auto-select.
-4. **Log Metrics**: Enter the **Quantity** produced, **Machine ID** (e.g., `CNC-01`), and **Status** (`Completed`, `In Progress`, `Pending`).
+4. **Log Metrics**: Enter the **Time** taken for the row in hours and minutes (e.g., `1` h `30` m), the **Quantity** produced, **Machine ID** (e.g., `CNC-01`), and **Status** (`Completed`, `In Progress`, `Pending`).
 5. **Attach Files**: Click **`Attach`** to upload drawings, quality inspection images, or spec sheets.
 6. **Submit**: Click **`Save Entries`**. Your logged hours will instantly update in the **Today's Logs** table.
 
